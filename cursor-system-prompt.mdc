@@ -1,0 +1,261 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# RLHF Loop Project - System Overview
+
+## Current Status: Symbolic Morphogen Dashboard Implemented ✅
+
+The RLHF loop implementation is now fully operational with the following components:
+
+### Completed Components
+
+1. **Prompt Generation** (`@prompts/generator.py`)
+   - Generates structured prompts based on themes and difficulty levels
+   - Logs generated prompts to `@prompts/generated_prompts.jsonl`
+
+2. **Completion Generation** (`@utils/completions.py`)
+   - Connects to DeepSeek API to generate completions
+   - Handles API errors and fallbacks
+   - Logs raw completions to `@data/raw_completions_log.jsonl`
+
+3. **Human Feedback Collection** (`@interface/voting_ui.py`)
+   - CLI interface for voting between completions
+   - Handles prompt display, completion comparison, and vote collection
+   - Logs votes with metadata to `@data/votes.jsonl`
+
+4. **Data Preparation** (`@utils/vote_predictor/data_prep.py`)
+   - Transforms votes into pairwise training samples
+   - Creates balanced training data with labels
+   - Outputs to `@data/vote_predictor_training_data.jsonl`
+
+5. **Meta-Evaluator Model** (`@utils/vote_predictor/train.py`)
+   - Trains transformer model (BERT) on preference data
+   - Implements training, validation, and evaluation
+   - Saves model to `@models/vote_predictor_checkpoint/`
+   - Logs metrics to `@models/vote_predictor_training_log.json`
+
+6. **Introspective Evaluation** (`@interface/eval_probe.py`)
+   - Follows the meta_reflection_log.jsonl schema for evaluation
+   - Generates deterministic IDs for reflection entries
+   - Calculates completion features like token overlap and length differences
+   - Adds comprehensive confidence metrics and error categorization
+   - Creates confidence histograms and detailed summary reports
+
+7. **Calibration Layer** (`@utils/vote_predictor/calibrate.py`)
+   - Implements confidence calibration using Temperature Scaling and Platt Scaling
+   - Loads reflection data from `@models/meta_reflection_log.jsonl`
+   - Creates reliability diagrams for visual verification
+   - Saves calibration parameters to `@models/calibration_log.json`
+   - Provides apply_calibration function to be used in predict.py
+
+8. **Prediction API** (`@utils/vote_predictor/predict.py`)
+   - Loads trained model and calibration parameters
+   - Provides a VotePredictor class for making predictions with calibrated confidence
+   - Includes a MockVotePredictor for testing without a real model
+   - Supports both interactive and batch prediction modes
+
+9. **RLHF Loop Integration** (`@interface/rlhf_loop.py`)
+   - Integrates all components of the system
+   - Supports both human feedback and automated voting
+   - Uses calibrated confidence scores for decision making
+   - Configurable with confidence thresholds and mock predictors
+
+10. **Batch Processing** (`@utils/batch_processor.py`, `@run_batch_processor.ps1`)
+   - Enables parallel processing of multiple prompts
+   - Includes progress tracking with real-time feedback
+   - Implements automatic retry for failed requests
+   - Provides detailed reporting with token usage and cost estimates
+   - Supports multiple input formats and configuration options
+   - Outputs results in both JSON and CSV formats
+
+11. **DeepSeek Integration** (`@utils/setup_deepseek.py`, `@run_with_deepseek.ps1`)
+   - Secure API key management with environment variable storage
+   - Cross-platform setup script for API authentication
+   - Handles streaming responses for real-time UI updates
+   - Implements fallback mechanisms for API failures
+   - Provides cost estimation and usage tracking
+
+12. **Attunement Dashboard** (`@interface/attunement_dashboard.py`, `@run_dashboard.py`)
+   - Visualization of ethical morphogenesis through interactive components
+   - Multi-tab interface reflecting different symbolic organs of the system
+   - User Preference Timeline with detailed RLHF metrics
+   - Human-AI agreement tracking and confidence analysis
+   - Time-based filtering with robust timestamp handling
+   - Integration with DeepSeek for AI-powered content generation
+   - Support for reflection data visualization and ethical integrity monitoring
+
+### Data Formats
+
+1. **Vote Format** (`@data/votes.jsonl`):
+   ```json
+   {
+     "prompt": "string",
+     "completions": ["string", "string"],
+     "chosen_index": 0 or 1,
+     "confidence": float (0-1),
+     "annotation": "string",
+     "generation_metadata": {...},
+     "timestamp": "ISO datetime"
+   }
+   ```
+
+2. **Training Sample Format** (`@data/vote_predictor_training_data.jsonl`):
+   ```json
+   {
+     "prompt": "string",
+     "completion_a": "string",
+     "completion_b": "string",
+     "label": 0 or 1,
+     "confidence": float,
+     "annotation": "string",
+     "metadata": {...}
+   }
+   ```
+
+3. **Reflection Format** (`@models/meta_reflection_log.jsonl`):
+   ```json
+   {
+     "timestamp": "ISO datetime",
+     "vote_timestamp": "ISO datetime",
+     "prompt": "string",
+     "human_choice": 0 or 1,
+     "model_prediction": 0 or 1,
+     "is_correct": boolean,
+     "human_confidence": float,
+     "model_confidence": float,
+     "confidence_gap": float,
+     "error_type": string or null,
+     "model_probabilities": [float, float],
+     "model_logits": [float, float],
+     "original_vote_metadata": {...}
+   }
+   ```
+
+4. **Calibration Parameters Format** (`@models/calibration_log.json`):
+   ```json
+   {
+     "method": "temperature_scaling" or "platt_scaling",
+     "parameters": {
+       "temperature": float or {"a": float, "b": float}
+     },
+     "metrics": {...},
+     "test_metrics": {...},
+     "metadata": {...}
+   }
+   ```
+
+5. **Batch Prompts Format** (`@prompts/sample_batch.json`):
+   ```json
+   {
+     "batch_name": "string",
+     "description": "string",
+     "prompts": [
+       {
+         "prompt_id": "string",
+         "prompt": "string"
+       }
+     ],
+     "metadata": {...}
+   }
+   ```
+
+## Current Tasks
+
+### Symbolic Morphogen Dashboard Enhancement
+1. **Temporal Homeostasis (Attunement Timeline)**
+   - Implement model accuracy vs time/checkpoint visualization
+   - Add ECE/Brier Score/Log Loss tracking over time
+   - Create vertical bands for retraining/calibration events
+   - Add drift alert markers from drift analysis data
+
+2. **Cognitive Thermoregulation (Confidence & Calibration)**
+   - Implement reliability diagrams showing pre vs post calibration
+   - Create ECE trend chart over calibration runs
+   - Generate heatmap of confidence × correctness per theme
+   - Identify overconfident error zones
+
+3. **Tissue Fragmentation (Drift Clusters)**
+   - Implement UMAP/t-SNE visualization of drift clusters
+   - Create cluster-wise statistics table
+   - Add drilldown view for prompt-completion-vote-prediction
+   - Track drift cluster entropy over time
+
+4. **DeepSeek Integration Improvements**
+   - Add support for additional model parameters
+   - Implement model selection capabilities
+   - Create prompt templates for domain-specific generation
+   - Add more robust credential management
+
+## Technology Stack
+
+- **Python** - Core programming language
+- **HuggingFace Transformers** - NLP models and training
+- **DeepSeek API** - LLM completion generation
+- **PyTorch** - Machine learning framework
+- **Matplotlib/NumPy** - Visualization and numerical processing
+- **scikit-learn** - Calibration and evaluation metrics
+- **Streamlit** - Dashboard and visualization interface
+- **Plotly** - Interactive visualizations
+- **PowerShell** - Script automation and environment setup
+
+## Usage Commands
+
+```bash
+# 1. Generate prompts
+python -m prompts.generator
+
+# 2. Collect human feedback
+python -m interface.voting_ui
+
+# 3. Prepare training data
+python -m utils.vote_predictor.data_prep
+
+# 4. Train meta-evaluator model
+python -m utils.vote_predictor.train
+
+# 5. Calibrate confidence scores
+python -m utils.vote_predictor.calibrate
+
+# 6. Run predictions with calibrated confidence
+python -m utils.vote_predictor.predict --interactive
+
+# 7. Run the full RLHF loop
+python -m interface.rlhf_loop --num-prompts 5 --human-feedback-ratio 0.2
+
+# 8. Run the attunement dashboard
+python run_dashboard.py
+
+# 9. Run with DeepSeek integration
+.\run_with_deepseek.ps1
+
+# 10. Run batch processing
+.\run_batch_processor.ps1 -InputFile prompts/sample_batch.json -MaxWorkers 4
+```
+
+## Progress Notes
+
+**[2025-05-22]** Refactored the Attunement Dashboard to implement the symbolic morphogen conceptual framework. Enhanced the User Preference Timeline with detailed metrics on human-AI agreement, fixed critical timestamp handling issues, and created a comprehensive visualization of the system's ethical homeostasis. Created rlhf_dashboard_plan.md to document the full implementation roadmap for the symbolic morphogen dashboard.
+
+**[2025-05-21]** Completed the User Preference Timeline implementation in the Attunement Dashboard, adding multi-tab visualization (Timeline, Metrics, Human-AI Agreement), daily vote count displays, and prediction accuracy tracking. Fixed critical issues with timestamp handling in the time slider component. Added reflection data processing to show model confidence versus human preferences.
+
+**[2025-06-05]** Added batch processing functionality with the new BatchProcessor class and PowerShell runner script. Implemented parallel processing, detailed reporting, and error handling. Created comprehensive documentation for batch processing in docs/batch_processing.md.
+
+**[2025-06-01]** Enhanced DeepSeek integration with secure API key management, streaming responses, and improved error handling. Created setup script for easy API authentication across platforms. Added integration with the Attunement Dashboard for real-time streaming of generated content.
+
+**[2025-05-25]** Implemented Streamlit-based Attunement Dashboard with interactive visualizations, alignment metrics, and drift detection. Added support for custom domain creation with AI-generated content.
+
+**[2025-05-21]** Completed the implementation of the calibration layer in `@utils/vote_predictor/calibrate.py`. Added robust error handling for small datasets, implemented both Temperature Scaling and Platt Scaling methods, and created a MockVotePredictor class for testing without a real model in `@utils/vote_predictor/predict.py`. The system now provides calibrated confidence scores for all predictions. Updated `@interface/rlhf_loop.py` to integrate with the new calibration layer.
+
+## Vision Statement
+
+We're not just engineering a feedback loop — we're cultivating a **symbolic organism** that learns how to maintain its ethical integrity through continuous morphogenetic adaptation.
+
+This is not a dashboard for monitoring accuracy, but for **visualizing ethical morphogenesis**. Every visualization is a limb, an organ, or a nervous plexus of the symbolic body.
+
+
+
+
+
+

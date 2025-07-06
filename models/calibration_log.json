@@ -1,0 +1,78 @@
+{
+  "method": "temperature_scaling",
+  "parameters": {
+    "temperature": 19.682827609098688
+  },
+  "metrics": {
+    "pre_calibration": {
+      "log_loss": 0.6973188274308885,
+      "brier_score": 0.2520825596803036,
+      "ece": 0.02084815502166748
+    },
+    "post_calibration": {
+      "log_loss": 0.6933169046780918,
+      "brier_score": 0.2500848616794693,
+      "ece": 0.0010598296553032682
+    },
+    "improvement": {
+      "log_loss": 0.0040019227527966494,
+      "brier_score": 0.0019976980008342693,
+      "ece": 0.019788325366364212
+    }
+  },
+  "test_metrics": {
+    "pre_calibration": {
+      "log_loss": 0.6375119307499275,
+      "brier_score": 0.22221230553413207,
+      "ece": 0.0
+    },
+    "post_calibration": {
+      "log_loss": 0.6902415406407608,
+      "brier_score": 0.24854718413792518,
+      "ece": 0.0
+    },
+    "improvement": {
+      "log_loss": -0.05272960989083331,
+      "brier_score": -0.026334878603793105,
+      "ece": 0.0
+    }
+  },
+  "metadata": {
+    "timestamp": "2025-05-21T12:46:11.415723",
+    "reflection_path": "D:\\Projects\\rlhf_loop\\models\\meta_reflection_log.jsonl",
+    "train_size": 2,
+    "test_size": 1,
+    "random_state": 42,
+    "is_global_calibration": true
+  },
+  "last_updated": "2025-05-21T18:40:00.000000",
+  "history": [
+    {
+      "timestamp": "2025-05-21T16:00:00.000000",
+      "calibration_error": 0.22,
+      "sample_count": 500,
+      "accuracy": 0.71,
+      "avg_confidence_before": 0.91,
+      "avg_confidence_after": 0.75,
+      "notes": "Initial calibration based on first 500 samples"
+    },
+    {
+      "timestamp": "2025-05-21T17:00:00.000000",
+      "calibration_error": 0.18,
+      "sample_count": 800,
+      "accuracy": 0.73,
+      "avg_confidence_before": 0.88,
+      "avg_confidence_after": 0.78,
+      "notes": "Improved calibration after incorporating more diverse prompts"
+    },
+    {
+      "timestamp": "2025-05-21T18:00:00.000000",
+      "calibration_error": 0.15,
+      "sample_count": 1200,
+      "accuracy": 0.76,
+      "avg_confidence_before": 0.85,
+      "avg_confidence_after": 0.81,
+      "notes": "Further improvement with temperature-based scaling"
+    }
+  ]
+}

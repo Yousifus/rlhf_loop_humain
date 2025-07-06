@@ -1,0 +1,13 @@
+{
+  "version": "v2.0",
+  "timestamp": "2025-05-21T17:30:00.000000",
+  "training_samples": 800,
+  "accuracy": 0.73,
+  "calibration_error": 0.18,
+  "confidence_avg": 0.88,
+  "model_architecture": "DistilBERT-base",
+  "training_steps": 1800,
+  "learning_rate": 3e-5,
+  "batch_size": 16,
+  "notes": "Model with improved calibration and more diverse training data"
+} 

@@ -1,0 +1,60 @@
+{
+  "timestamp": "2025-05-21T13:36:13.260351",
+  "config": {
+    "time_window_days": 7,
+    "min_examples_per_window": 20,
+    "n_clusters": 5,
+    "dbscan_eps": 0.5,
+    "dbscan_min_samples": 5,
+    "confidence_drift_threshold": 0.1,
+    "embedding_dimensions": 32,
+    "random_seed": 42,
+    "alert_accuracy_change_threshold": 0.1
+  },
+  "summary": {
+    "total_examples": 3,
+    "time_drift_detected": false,
+    "num_clusters": 0,
+    "potential_drift_clusters": [],
+    "calibration_drift_detected": false,
+    "calibration_trend": "stable"
+  },
+  "time_analysis": {
+    "time_windows": [],
+    "drift_detected": false,
+    "detected_drifts": []
+  },
+  "clustering_analysis": {
+    "algorithm": "none",
+    "quality_scores": {},
+    "clusters": []
+  },
+  "calibration_analysis": {
+    "quartile_calibration": [
+      {
+        "quartile": 1,
+        "avg_confidence": 0.5,
+        "accuracy": 0.0,
+        "calibration_error": 0.5,
+        "example_count": 1
+      },
+      {
+        "quartile": 2,
+        "avg_confidence": 0.5,
+        "accuracy": 0.0,
+        "calibration_error": 0.5,
+        "example_count": 1
+      },
+      {
+        "quartile": 3,
+        "avg_confidence": 0.5,
+        "accuracy": 0.0,
+        "calibration_error": 0.5,
+        "example_count": 1
+      }
+    ],
+    "calibration_drift_detected": false,
+    "calibration_trend": "stable"
+  },
+  "visualization_paths": {}
+}

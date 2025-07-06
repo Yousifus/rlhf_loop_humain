@@ -1,0 +1,13 @@
+{
+  "version": "v3.0",
+  "timestamp": "2025-05-21T18:30:00.000000",
+  "training_samples": 1200,
+  "accuracy": 0.76,
+  "calibration_error": 0.15,
+  "confidence_avg": 0.81,
+  "model_architecture": "DistilBERT-base",
+  "training_steps": 2400,
+  "learning_rate": 2e-5,
+  "batch_size": 32,
+  "notes": "Latest model with temperature scaling and focus on reducing overconfidence"
+} 

@@ -1,0 +1,14 @@
+{
+  "timestamp": "2025-05-21T12:12:15.237505",
+  "model_path": "D:\\Projects\\rlhf_loop\\models\\vote_predictor_checkpoint",
+  "total_votes": 3,
+  "votes_evaluated": 3,
+  "correct_predictions": 2,
+  "accuracy": 0.6666666666666666,
+  "error_counts": {
+    "high_confidence_error": 0,
+    "medium_confidence_error": 0,
+    "low_confidence_error": 1
+  },
+  "high_confidence_error_rate": 0.0
+}

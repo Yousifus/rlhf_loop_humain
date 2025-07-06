@@ -1,0 +1,48 @@
+RLHF Loop Architecture Diagram (ASCII)
+--------------------------------------
+
+                  +------------------------+
+                  |   Prompt Generation    |
+                  +------------------------+
+                          |
+                          v
+                  +------------------------+
+                  |  Completions Generator |
+                  +------------------------+
+                          |
+       +-------------------+-------------------+
+       |                                       |
+       v                                       v
++---------------+                   +------------------------+
+| Human Voting  |<--+               |  Vote Predictor Model  |
++---------------+   |               +------------------------+
+       |            |                         ^
+       v            |                         |
++------------------+|                +------------------------+
+| Human Vote Data  ||                |   Calibration Layer    |
++------------------+|                +------------------------+
+       |            |
+       |            |                +------------------------+
+       +------------+--------------->|    Evaluation Probe    |
+                                     +------------------------+
+                                               |
+                                               v
+                                     +------------------------+
+                                     |    Meta-Reflection     |
+                                     +------------------------+
+                                               |
+                                               v
+                                     +------------------------+
+                                     |    RLHF Loop Control   |
+                                     +------------------------+
+
+Data Flow
+---------
+1. prompts/generator.py → prompts/generated_prompts.jsonl
+2. utils/completions.py → data/raw_completions_log.jsonl
+3. interface/voting_ui.py → data/votes.jsonl
+4. utils/vote_predictor/data_prep.py → data/vote_predictor_training_data.jsonl
+5. utils/vote_predictor/train.py → models/vote_predictor_checkpoint/
+6. interface/eval_probe.py → models/meta_reflection_log.jsonl
+7. utils/vote_predictor/calibrate.py → models/calibration_log.json
+8. utils/vote_predictor/predict.py → data/predictions.jsonl 

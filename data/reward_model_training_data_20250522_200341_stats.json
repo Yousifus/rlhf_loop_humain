@@ -1,0 +1,8 @@
+{
+  "total_examples": 24,
+  "avg_prompt_length": 75.66666666666667,
+  "avg_chosen_length": 525.25,
+  "avg_rejected_length": 526.0833333333334,
+  "has_quality_metrics": 0.0,
+  "timestamp": "2025-05-22T20:03:41.814492"
+}

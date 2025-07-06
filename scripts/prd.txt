@@ -1,0 +1,228 @@
+# PRD.txt: RLHF Loop - Morpho-Reflective AI Alignment System
+
+## 1. Product Vision
+
+RLHF Loop is an advanced system for creating, maintaining, and continuously improving AI models through human feedback and preference learning. The system operates as a "symbolic morphogenesis machine" that not only aligns models with human preferences but also monitors alignment drift, maintains confidence calibration, and enables deep introspection into model behavior.
+
+## 2. Objectives
+
+- Create a comprehensive RLHF pipeline that spans from prompt generation to model retraining
+- Implement sophisticated preference modeling with calibrated confidence
+- Enable detailed monitoring and visualization of model alignment over time
+- Support research into novel alignment techniques through flexible architecture
+- Provide tools for understanding the relationship between human feedback and model behavior
+
+## 3. Target Users
+
+- AI Researchers studying alignment techniques
+- ML Engineers implementing RLHF pipelines
+- Data Scientists analyzing model behavior
+- Safety Teams evaluating alignment drift
+- AI Ethics Researchers studying preference patterns
+
+## 4. System Architecture
+
+### 4.1 Core Components
+
+#### Prompt Generation Module
+- Generate diverse, challenging prompts across domains
+- Support templated, evolutionary, and free-form prompts
+- Implement domain-specific prompt generators
+
+#### Completion Generation System
+- Support multiple model backends (DeepSeek, OpenAI, etc.)
+- Generate completion pairs with controlled parameters
+- Cache completions to reduce API costs
+
+#### Human Feedback Interface
+- Collect binary and scalar preference judgments
+- Support detailed annotations and reasoning
+- Track user consistency and confidence
+
+#### Vote Prediction Engine
+- Train transformer-based preference models
+- Support ensemble methods for robustness
+- Implement confidence calibration techniques
+
+#### Attunement & Reflection System
+- Log comprehensive metadata on predictions
+- Track accuracy, calibration, and drift metrics
+- Identify systematic error patterns
+
+#### Retraining Orchestrator
+- Select high-value samples for retraining
+- Manage fine-tuning jobs for candidate models
+- Evaluate model improvements
+
+#### Visualization Dashboard
+- Interactive exploration of model behavior
+- Multi-dimensional performance visualization
+- Temporal analysis of alignment drift
+
+### 4.2 Data Flows
+
+```
+Prompts → Completions → Human Feedback → 
+  ↓
+Vote Prediction → Meta-Reflection Log → 
+  ↓
+Error Analysis → Retraining → Evaluation
+```
+
+## 5. Functional Requirements
+
+### 5.1 Prompt Generation
+
+- **FR1.1:** Generate prompts from templates, existing datasets, or free-form instructions
+- **FR1.2:** Support prompt categories (reasoning, factual, creative, etc.)
+- **FR1.3:** Generate prompts at controlled difficulty levels
+- **FR1.4:** Allow domain-specific prompt constraints
+
+### 5.2 Completion Generation
+
+- **FR2.1:** Generate multiple completions for each prompt
+- **FR2.2:** Support streaming responses for efficiency
+- **FR2.3:** Implement parameter variation (temperature, top_p)
+- **FR2.4:** Cache completions with content-based fingerprinting
+
+### 5.3 Human Feedback Collection
+
+- **FR3.1:** Present completion pairs for binary choice
+- **FR3.2:** Support preference strength indicators (slight to strong preference)
+- **FR3.3:** Allow text annotations explaining preference choices
+- **FR3.4:** Track consistency with occasional repeated pairs
+
+### 5.4 Vote Prediction
+
+- **FR4.1:** Train models to predict human preferences
+- **FR4.2:** Calibrate confidence scores for accuracy
+- **FR4.3:** Support multi-dimensional preference modeling
+- **FR4.4:** Enable per-domain specialization
+
+### 5.5 Attunement System
+
+- **FR5.1:** Log detailed metadata on all predictions
+- **FR5.2:** Calculate calibration metrics over time
+- **FR5.3:** Detect drift in preference patterns
+- **FR5.4:** Identify error clusters for targeted improvement
+
+### 5.6 Retraining
+
+- **FR5.1:** Select samples based on information gain
+- **FR5.2:** Support different retraining strategies (DPO, RLHF)
+- **FR5.3:** Evaluate retraining results against baselines
+- **FR5.4:** Manage model versioning and deployment
+
+### 5.7 Visualization
+
+- **FR7.1:** Timeline view of performance metrics
+- **FR7.2:** Calibration curve visualization
+- **FR7.3:** Drift cluster analysis tools
+- **FR7.4:** Model comparison interfaces
+
+## 6. Technical Requirements
+
+### 6.1 Performance
+
+- **TR1.1:** Support batch processing of at least 1000 prompts/day
+- **TR1.2:** Dashboard response time under 2 seconds
+- **TR1.3:** API efficiency to minimize token usage
+- **TR1.4:** Training time for preference models under 4 hours on consumer hardware
+
+### 6.2 Scalability
+
+- **TR2.1:** Modular, plugin-based architecture
+- **TR2.2:** Asynchronous processing for API interactions
+- **TR2.3:** Distributed training support for large datasets
+- **TR2.4:** Database efficiency for large preference histories
+
+### 6.3 Integration
+
+- **TR3.1:** Support for multiple LLM providers
+- **TR3.2:** Standardized format for preference data
+- **TR3.3:** API endpoints for external feedback collection
+- **TR3.4:** Export capabilities for analysis
+
+### 6.4 Security & Privacy
+
+- **TR4.1:** Secure storage for API keys
+- **TR4.2:** Privacy-preserving feedback collection
+- **TR4.3:** Access controls for sensitive operations
+- **TR4.4:** Audit logging for all system actions
+
+## 7. Implementation Phases
+
+### 7.1 Phase 1: Foundation (Weeks 1-4)
+
+- Implement basic pipeline components
+- Set up data structures and logging
+- Create minimally viable UI for feedback
+- Establish baseline preference model
+
+### 7.2 Phase 2: Enhancement (Weeks 5-8)
+
+- Add confidence calibration
+- Implement attunement logging
+- Create basic dashboard visualizations
+- Add batch processing capabilities
+
+### 7.3 Phase 3: Advanced Features (Weeks 9-12)
+
+- Implement multi-model ensembles
+- Add drift detection algorithms
+- Create advanced visualization tools
+- Support for detailed feedback collection
+
+### 7.4 Phase 4: Optimization (Weeks 13-16)
+
+- Performance optimization
+- Distributed processing capabilities
+- Enhanced monitoring systems
+- Production-ready deployment
+
+## 8. Success Metrics
+
+### 8.1 Technical Metrics
+
+- **SM1.1:** Preference model accuracy >80%
+- **SM1.2:** Calibration error (ECE) 50 prompts/hour
+- **SM1.4:** API cost efficiency improvements >30%
+
+### 8.2 Research Metrics
+
+- **SM2.1:** Novel drift detection methodologies
+- **SM2.2:** Publication-worthy calibration techniques
+- **SM2.3:** Insights into preference dynamics
+- **SM2.4:** Contributions to alignment research
+
+## 9. Future Directions
+
+- Integration with constitutional AI approaches
+- Multi-modal preference learning (text, images, audio)
+- Cross-model transferability of preferences
+- Temporal dynamics of human preferences
+- MCTS-based exploration of preference space
+- Self-improvement through meta-learning
+
+## 10. Dependencies & Constraints
+
+- Access to LLM APIs (DeepSeek, OpenAI, etc.)
+- Computing resources for model training
+- Human annotators for feedback collection
+- Compliance with API terms of service
+- Budget constraints for API usage
+
+## 11. Appendix: Key Conceptual Framework
+
+The system implements a "Morpho-Reflective RLHF" paradigm, drawing parallels between biological morphogenesis and symbolic system alignment:
+
+- **Symbolic drift** = morphogenetic cancer
+- **Prompts** = bioelectric cues
+- **Retraining** = collective tissue repair
+- **Attunement Dashboard** = electrophysiological state monitor
+- **Error clusters** = damaged symbolic tissue
+- **Calibration** = homeostatic regulation
+
+This conceptual framing guides development toward a system that doesn't merely optimize for statistical alignment but maintains coherent symbolic integrity through continuous reflection and adaptation.
+
+---

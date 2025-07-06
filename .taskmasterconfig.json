@@ -1,0 +1,36 @@
+{
+  "project": {
+    "name": "Symbolic RLHF Loop",
+    "description": "A comprehensive RLHF system with visualization dashboard"
+  },
+  "api": {
+    "perplexity": "your-api-key-here",
+            "deepseek": "your-api-key-here",
+    "google": "your-api-key-here"
+  },
+  "prd": "scripts/prd.txt",
+  "tasks": {
+    "outputDir": "./tasks"
+  },
+  "models": {
+    "main": {
+      "provider": "perplexity",
+      "modelId": "sonar-medium-online",
+      "maxTokens": 8000,
+      "temperature": 0.2
+    },
+    "research": {
+      "provider": "perplexity",
+      "modelId": "sonar-small-online",
+      "maxTokens": 4000,
+      "temperature": 0.1
+    }
+  },
+  "global": {
+    "logLevel": "info",
+    "debug": false,
+    "defaultSubtasks": 5,
+    "defaultPriority": "medium",
+    "projectName": "RLHF Symbolic Loop"
+  }
+} 

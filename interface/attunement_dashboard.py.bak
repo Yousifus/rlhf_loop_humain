@@ -1,0 +1,3393 @@
+"""
+    Attunement Dashboard
+
+A Streamlit dashboard for visualizing RLHF system data including:
+    - Alignment metrics over time
+        - Calibration diagnostics
+            - Drift detection and analysis
+                - Model evolution
+                    - User preference timeline
+
+This dashboard provides insights into the performance and behavior of the 
+    RLHF system, helping to identify issues and track improvements.
+"""
+#!/usr/bin/env python3
+import os
+import sys
+import logging
+import json
+import pandas as pd
+import numpy as np
+import streamlit as st
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import altair as alt
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Union, Tuple
+import random
+import uuid
+import string
+import requests
+from time import sleep
+import base64
+import time
+
+# Add project root to Python path
+project_root = str(Path(__file__).resolve().parents[1])
+sys.path.append(project_root)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Disable Streamlit telemetry to prevent CORS errors
+os.environ["STREAMLIT_BROWSER_GATHER_USAGE_STATS"] = "false"
+
+# Set page configuration
+st.set_page_config(
+    page_title="RLHF Attunement Dashboard",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+def create_time_slider(data_df, timestamp_col='timestamp', label="Select Time Range"):
+    """Create a time range slider for filtering data"""
+    if data_df.empty or timestamp_col not in data_df.columns:
+        return data_df
+    
+    # Ensure timestamp column is in datetime format
+    if data_df[timestamp_col].dtype != 'datetime64[ns]':
+        try:
+            data_df[timestamp_col] = pd.to_datetime(data_df[timestamp_col])
+        except Exception as e:
+            st.warning(f"Error converting timestamps for slider: {e}")
+            return data_df
+    
+    # Get min and max dates from the data
+    min_date = data_df[timestamp_col].min().date()
+    max_date = data_df[timestamp_col].max().date()
+    
+    # Set default range (last 7 days or full range if shorter)
+    default_start = max(min_date, max_date - timedelta(days=7))
+    
+    # Create date range slider
+    date_range = st.slider(
+        label,
+        min_value=min_date,
+        max_value=max_date,
+        value=(default_start, max_date),
+        format="YYYY-MM-DD"
+    )
+    
+    start_time, end_time = date_range
+    
+    # Convert start and end dates to datetime (inclusive of full days)
+    start_datetime = pd.Timestamp(start_time)
+    end_datetime = pd.Timestamp(end_time) + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)
+    
+    # Filter and return the data
+    return filter_by_time_range(data_df, start_datetime, end_datetime, timestamp_col)
+
+def filter_by_time_range(data_df, start_time, end_time, timestamp_col='timestamp'):
+    """Filter dataframe by time range"""
+    if data_df.empty or timestamp_col not in data_df.columns:
+        return data_df
+    
+    if start_time is None or end_time is None:
+        return data_df
+    
+    # Make a copy to avoid modifying the original dataframe
+    df_copy = data_df.copy()
+    
+    # Ensure timestamp column is in datetime format
+    if df_copy[timestamp_col].dtype != 'datetime64[ns]':
+        try:
+            df_copy[timestamp_col] = pd.to_datetime(df_copy[timestamp_col])
+        except Exception as e:
+            st.warning(f"Error converting timestamps for filtering: {e}")
+            return data_df
+    
+    try:
+        # Ensure start_time and end_time are datetime objects
+        if isinstance(start_time, pd.Timestamp):
+            start_time = start_time.to_pydatetime()
+        if isinstance(end_time, pd.Timestamp):
+            end_time = end_time.to_pydatetime()
+        
+        # Filter by time range
+        filtered_df = df_copy[(df_copy[timestamp_col] >= start_time) & (df_copy[timestamp_col] <= end_time)]
+        return filtered_df
+    except Exception as e:
+        st.warning(f"Error filtering by time range: {e}")
+        return data_df
+
+def format_timestamp(ts):
+    """Format timestamp for display"""
+    if ts is None:
+        return "N/A"
+    
+    try:
+        if isinstance(ts, str):
+            ts = pd.to_datetime(ts)
+        
+        # Format datetime object
+        return ts.strftime("%Y-%m-%d %H:%M:%S")
+    except:
+        return str(ts)
+
+def plot_accuracy_over_time(data_df, window_size=10, calibration_history=None):
+    """Plot model prediction accuracy over time with rolling average and calibration markers"""
+    if data_df.empty or 'timestamp' not in data_df.columns or 'is_prediction_correct' not in data_df.columns:
+        return go.Figure().update_layout(title="No data available for accuracy plot")
+    
+    # Sort by timestamp
+    df = data_df.sort_values('timestamp')
+    
+    # Calculate rolling accuracy
+    df['rolling_accuracy'] = df['is_prediction_correct'].astype(int).rolling(window=window_size).mean()
+    
+    # Create figure
+    fig = go.Figure()
+    
+    # Add scatter plot for individual predictions
+    fig.add_trace(
+        go.Scatter(
+            x=df['timestamp'],
+            y=df['is_prediction_correct'].astype(int),
+            mode='markers',
+            name='Predictions',
+            marker=dict(
+                size=8,
+                color=df['is_prediction_correct'].map({True: 'green', False: 'red'}),
+                opacity=0.6
+            )
+        )
+    )
+    
+    # Add line plot for rolling accuracy
+    fig.add_trace(
+        go.Scatter(
+            x=df['timestamp'],
+            y=df['rolling_accuracy'],
+            mode='lines',
+            name=f'Rolling Accuracy (window={window_size})',
+            line=dict(width=3, color='blue')
+        )
+    )
+    
+    # Add calibration event markers if available
+    if calibration_history and 'history' in calibration_history:
+        calibration_events = []
+        for event in calibration_history['history']:
+            if 'timestamp' in event:
+                try:
+                    event_time = pd.to_datetime(event['timestamp'])
+                    calibration_events.append({
+                        'timestamp': event_time,
+                        'method': event.get('method', 'unknown'),
+                        'ece_before': event.get('ece_before', 'N/A'),
+                        'ece_after': event.get('ece_after', 'N/A')
+                    })
+                except Exception as e:
+                    logger.warning(f"Error processing calibration event timestamp: {e}")
+        
+        if calibration_events:
+            # Add vertical lines for calibration events
+            for event in calibration_events:
+                # Convert timestamp to string to avoid pandas Timestamp arithmetic operations
+                # which are no longer supported in newer pandas versions
+                event_time_str = event['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
+                
+                # Add vertical line at calibration time
+                fig.add_shape(
+                    type="line",
+                    x0=event_time_str,
+                    y0=0,
+                    x1=event_time_str,
+                    y1=1,
+                    line=dict(
+                        color="green",
+                        width=2,
+                        dash="dash",
+                    )
+                )
+                
+                # Add text annotation for calibration
+                fig.add_annotation(
+                    x=event_time_str,
+                    y=1.05,
+                    text=f"Calibration: {event['method']}<br>ECE: {event['ece_before']} → {event['ece_after']}",
+                    showarrow=True,
+                    arrowhead=1,
+                    ax=0,
+                    ay=-40,
+                    bordercolor="#c7c7c7",
+                    borderwidth=1,
+                    borderpad=4,
+                    bgcolor="#ff7f0e",
+                    opacity=0.8
+                )
+    
+    # Update layout
+    fig.update_layout(
+        title=f"Model Prediction Accuracy Over Time",
+        xaxis_title="Date",
+        yaxis_title="Accuracy",
+        yaxis=dict(range=[-0.1, 1.1]),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        hovermode="x unified"
+    )
+    
+    return fig
+
+def plot_confidence_calibration(data_df, num_bins=10):
+    """Plot confidence calibration curve"""
+    # Import the replacement function from visualizations module
+    from utils.dashboard.visualizations import plot_reliability_diagram
+    
+    # Use the new implementation
+    return plot_reliability_diagram(data_df, num_bins=num_bins, pre_calibration=True)
+
+def plot_error_types(data_df):
+    """Plot distribution of error types"""
+    if data_df.empty or 'prediction_error_type' not in data_df.columns:
+        return go.Figure().update_layout(title="No error type data available")
+    
+    # Count error types
+    error_counts = data_df['prediction_error_type'].value_counts().reset_index()
+    error_counts.columns = ['error_type', 'count']
+    
+    # Create pie chart
+    fig = px.pie(
+        error_counts,
+        values='count',
+        names='error_type',
+        title="Distribution of Error Types",
+        color_discrete_sequence=px.colors.qualitative.Set3
+    )
+    
+    # Update layout
+    fig.update_layout(
+        legend_title="Error Type"
+    )
+    
+    return fig
+
+def display_checkpoints_timeline(checkpoints):
+    """Display model checkpoints as a timeline"""
+    if not checkpoints:
+        st.warning("No model checkpoint data available")
+        return
+    
+    # Convert to DataFrame
+    df = pd.DataFrame(checkpoints)
+    
+    # Ensure we have necessary columns
+    if 'timestamp' not in df.columns or 'version' not in df.columns:
+        st.warning("Checkpoint data missing required fields")
+        return
+    
+    # Ensure timestamp is datetime and version is string
+    try:
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df['version'] = df['version'].astype(str)
+        
+        # Convert numeric columns for hover data
+        if 'training_samples' in df.columns:
+            df['training_samples'] = pd.to_numeric(df['training_samples'], errors='coerce')
+        if 'accuracy' in df.columns:
+            df['accuracy'] = pd.to_numeric(df['accuracy'], errors='coerce')
+        if 'calibration_error' in df.columns:
+            df['calibration_error'] = pd.to_numeric(df['calibration_error'], errors='coerce')
+    except Exception as e:
+        st.warning(f"Error processing checkpoint data: {e}")
+        # Continue with unprocessed data
+    
+    # Sort by timestamp
+    df = df.sort_values('timestamp')
+    
+    # Create a timeline
+    fig = px.line(
+        df,
+        x='timestamp',
+        y='version',
+        markers=True,
+        hover_data=['training_samples', 'accuracy', 'calibration_error']
+    )
+    
+    # Update layout
+    fig.update_layout(
+        title="Model Checkpoint Timeline",
+        xaxis_title="Date",
+        yaxis_title="Model Version"
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Show checkpoint details in a table
+    with st.expander("View Checkpoint Details"):
+        # Create a copy with string columns to avoid Arrow serialization issues
+        display_df = df.copy()
+        
+        # Convert columns that might cause serialization issues to strings
+        for col in display_df.columns:
+            if display_df[col].dtype == 'object' or col == 'timestamp':
+                display_df[col] = display_df[col].astype(str)
+        
+        st.dataframe(display_df)
+
+def plot_drift_clusters(drift_clusters, reflection_data):
+    """Plot drift clusters using Plotly"""
+    # Import the enhanced version with default options
+    from utils.dashboard.visualizations import plot_enhanced_drift_clusters
+    return plot_enhanced_drift_clusters(drift_clusters, reflection_data, use_umap=False)
+
+def plot_human_ai_agreement(vote_logs):
+    """Plot agreement between human preferences and AI predictions over time"""
+    if vote_logs.empty or 'is_model_vote' not in vote_logs.columns:
+        return go.Figure().update_layout(title="No data available for agreement plot")
+    
+    # Make a copy and ensure timestamp is in datetime format
+    df = vote_logs.copy()
+    if df['timestamp'].dtype != 'datetime64[ns]':
+        try:
+            df['timestamp'] = pd.to_datetime(df['timestamp'])
+        except Exception as e:
+            st.warning(f"Error converting timestamps for agreement plot: {e}")
+            return go.Figure().update_layout(title="Error processing timestamps")
+    
+    # Filter to include only human votes (non-model votes)
+    human_votes = df[df['is_model_vote'] == False].copy()
+    
+    if human_votes.empty:
+        return go.Figure().update_layout(title="No human votes available for comparison")
+    
+    # Extract needed columns
+    if 'prompt_id' not in human_votes.columns or 'choice' not in human_votes.columns:
+        return go.Figure().update_layout(title="Vote logs missing required preference data")
+    
+    # For each human vote, find the corresponding model prediction for the same prompt
+    results = []
+    for _, human_vote in human_votes.iterrows():
+        prompt_id = human_vote.get('prompt_id')
+        pair_id = human_vote.get('pair_id', None)
+        
+        # Find model prediction for the same prompt/pair
+        model_votes = df[(df['is_model_vote'] == True) & 
+                         (df['prompt_id'] == prompt_id)]
+        
+        # If pair_id is available, use it for more precise matching
+        if pair_id is not None and 'pair_id' in df.columns:
+            model_votes = model_votes[model_votes['pair_id'] == pair_id]
+        
+        if not model_votes.empty:
+            # Get the most recent model prediction before human vote
+            model_vote = model_votes[model_votes['timestamp'] <= human_vote['timestamp']].sort_values('timestamp', ascending=False).iloc[0]
+            
+            # Compare model and human choice
+            human_choice = human_vote.get('choice')
+            model_choice = model_vote.get('choice')
+            
+            # Record the agreement data point
+            results.append({
+                'timestamp': human_vote['timestamp'],
+                'prompt_id': prompt_id,
+                'human_choice': human_choice,
+                'model_choice': model_choice,
+                'agreement': human_choice == model_choice,
+                'model_confidence': model_vote.get('confidence', 0.5)
+            })
+    
+    if not results:
+        return go.Figure().update_layout(title="No matching model-human pairs found")
+    
+    # Convert to DataFrame
+    agreement_df = pd.DataFrame(results)
+    
+    # Sort by timestamp
+    agreement_df = agreement_df.sort_values('timestamp')
+    
+    # Add rolling agreement rate
+    window_size = min(10, len(agreement_df))
+    agreement_df['rolling_agreement'] = agreement_df['agreement'].astype(int).rolling(window=window_size).mean()
+    
+    # Convert timestamps to strings for Plotly
+    agreement_df['timestamp_str'] = agreement_df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Create figure for agreement rate over time
+    fig = go.Figure()
+    
+    # Add scatter plot for individual agreements
+    fig.add_trace(
+        go.Scatter(
+            x=agreement_df['timestamp_str'],
+            y=agreement_df['agreement'].astype(int),
+            mode='markers',
+            name='Agreement',
+            marker=dict(
+                size=8,
+                color=agreement_df['agreement'].map({True: 'green', False: 'red'}),
+                opacity=0.6
+            )
+        )
+    )
+    
+    # Add line plot for rolling agreement rate
+    fig.add_trace(
+        go.Scatter(
+            x=agreement_df['timestamp_str'],
+            y=agreement_df['rolling_agreement'],
+            mode='lines',
+            name=f'Rolling Agreement (window={window_size})',
+            line=dict(width=3, color='blue')
+        )
+    )
+    
+    # Update layout
+    fig.update_layout(
+        title=f"Human-AI Preference Agreement Over Time",
+        xaxis_title="Date",
+        yaxis_title="Agreement Rate",
+        yaxis=dict(range=[-0.1, 1.1]),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        hovermode="x unified"
+    )
+    
+    return fig
+
+def display_preference_timeline(vote_logs_df):
+    """Display user preference timeline with detailed RLHF metrics"""
+    if vote_logs_df.empty:
+        st.warning("No vote log data available")
+        return
+    
+    # Ensure we have necessary columns
+    if 'timestamp' not in vote_logs_df.columns:
+        st.warning("Vote log data missing required timestamp field")
+        return
+    
+    # Create tabs for different visualizations
+    timeline_tab, metrics_tab, agreement_tab, details_tab = st.tabs(["Timeline", "Metrics", "Human-AI Agreement", "Details"])
+    
+    with timeline_tab:
+        # Group by day and count votes
+        vote_logs_df['date'] = vote_logs_df['timestamp'].dt.date
+        daily_votes = vote_logs_df.groupby('date', observed=True).size().reset_index(name='vote_count')
+        
+        # Create a bar chart for daily votes
+        fig = px.bar(
+            daily_votes,
+            x='date',
+            y='vote_count',
+            title="Daily Annotation Volume",
+            color_discrete_sequence=['#2D87BB']  # Blue color for consistency
+        )
+        
+        # Update layout
+        fig.update_layout(
+            xaxis_title="Date",
+            yaxis_title="Number of Annotations",
+            hovermode="x unified"
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with metrics_tab:
+        # Check if we have model prediction data
+        has_model_data = all(col in vote_logs_df.columns for col in ['is_model_vote', 'confidence'])
+        
+        if has_model_data:
+            # Filter to include only explicit model votes
+            model_votes = vote_logs_df[vote_logs_df['is_model_vote'] == True].copy()
+            
+            if not model_votes.empty:
+                # Group by date and calculate success rate
+                model_votes['date'] = model_votes['timestamp'].dt.date
+                
+                # Create metrics for model performance
+                col1, col2, col3 = st.columns(3)
+                
+                # Overall accuracy - if we can determine it
+                if 'is_prediction_correct' in model_votes.columns:
+                    accuracy = model_votes['is_prediction_correct'].mean()
+                    col1.metric("Model Accuracy", f"{accuracy:.2%}")
+                
+                # Average confidence
+                avg_confidence = model_votes['confidence'].mean()
+                col2.metric("Avg Confidence", f"{avg_confidence:.2%}")
+                
+                # Number of predictions
+                col3.metric("Total Predictions", f"{len(model_votes)}")
+                
+                # Plot confidence and accuracy over time if we have enough data
+                if len(model_votes) >= 5:
+                    # Group by date
+                    daily_metrics = model_votes.groupby('date', observed=True).agg({
+                        'confidence': 'mean',
+                        'is_prediction_correct': 'mean' if 'is_prediction_correct' in model_votes.columns else lambda x: float('nan')
+                    }).reset_index()
+                    
+                    # Create time series plot for confidence
+                    fig = px.line(
+                        daily_metrics, 
+                        x='date', 
+                        y=['confidence'] + (['is_prediction_correct'] if 'is_prediction_correct' in model_votes.columns else []),
+                        title="Model Confidence & Accuracy Over Time",
+                        labels={
+                            'date': 'Date',
+                            'value': 'Score',
+                            'variable': 'Metric'
+                        },
+                        color_discrete_map={
+                            'confidence': '#FFA500',  # Orange
+                            'is_prediction_correct': '#2D87BB'  # Blue
+                        }
+                    )
+                    
+                    # Update layout
+                    fig.update_layout(
+                        hovermode="x unified",
+                        yaxis_tickformat='.0%'
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                # Error types distribution if available
+                if 'prediction_error_type' in model_votes.columns:
+                    error_counts = model_votes['prediction_error_type'].value_counts().reset_index()
+                    error_counts.columns = ['Error Type', 'Count']
+                    
+                    fig = px.pie(
+                        error_counts, 
+                        values='Count', 
+                        names='Error Type',
+                        title="Distribution of Prediction Error Types",
+                        color_discrete_sequence=px.colors.qualitative.Set3
+                    )
+                    
+                    fig.update_traces(textposition='inside', textinfo='percent+label')
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("No model prediction data available yet")
+            else:
+                st.info("Model prediction data not available in vote logs")
+    
+    with agreement_tab:
+        st.subheader("Human vs AI Preference Alignment")
+        
+        # Add description of what this tab shows
+        st.markdown("""
+            This visualization shows how well the AI model's preferences align with human annotators.
+            Each point represents a human annotation and whether the model predicted the same preference.
+        """)
+        
+        # Plot human-AI agreement over time
+        agreement_fig = plot_human_ai_agreement(vote_logs_df)
+        st.plotly_chart(agreement_fig, use_container_width=True)
+        
+        # Add additional insights if available
+        if 'is_model_vote' in vote_logs_df.columns and 'confidence' in vote_logs_df.columns:
+            # Get human and model votes
+            human_votes = vote_logs_df[vote_logs_df['is_model_vote'] == False]
+            model_votes = vote_logs_df[vote_logs_df['is_model_vote'] == True]
+            
+            # Create columns for metrics
+            col1, col2, col3 = st.columns(3)
+            
+            # Count of human annotations
+            col1.metric("Human Annotations", f"{len(human_votes)}")
+            
+            # Count of model predictions
+            col2.metric("Model Predictions", f"{len(model_votes)}")
+            
+            # Add some analysis on agreement rates if available
+            if not human_votes.empty and not model_votes.empty and 'choice' in human_votes.columns:
+                # Attempt to match human and model votes
+                matched_pairs = []
+                for _, human_vote in human_votes.iterrows():
+                    prompt_id = human_vote.get('prompt_id')
+                    pair_id = human_vote.get('pair_id', None)
+                    
+                    # Find corresponding model vote
+                    matching_votes = model_votes[(model_votes['prompt_id'] == prompt_id)]
+                    if pair_id is not None and 'pair_id' in model_votes.columns:
+                        matching_votes = matching_votes[matching_votes['pair_id'] == pair_id]
+                    
+                    if not matching_votes.empty:
+                        model_vote = matching_votes.iloc[0]
+                        matched_pairs.append((human_vote.get('choice'), model_vote.get('choice')))
+                
+                # Calculate agreement rate
+                if matched_pairs:
+                    agreement_rate = sum(h == m for h, m in matched_pairs) / len(matched_pairs)
+                    col3.metric("Agreement Rate", f"{agreement_rate:.2%}")
+                    
+                    # Add some explanation
+                    if agreement_rate > 0.8:
+                        st.success("The model shows strong alignment with human preferences.")
+                    elif agreement_rate > 0.6:
+                        st.info("The model shows moderate alignment with human preferences.")
+                    else:
+                        st.warning("The model shows weak alignment with human preferences.")
+    
+    with details_tab:
+        # Show vote details in a table with most recent votes first
+        st.subheader("Recent Annotations")
+        
+        # Clean up display columns
+        display_cols = [col for col in vote_logs_df.columns if col not in ['is_model_vote', 'pair_id']]
+        
+        # Create a downloadable version of the data
+        csv = vote_logs_df[display_cols].to_csv(index=False)
+        st.download_button(
+            label="Download Data as CSV",
+            data=csv,
+            file_name="rlhf_annotations.csv",
+            mime="text/csv"
+        )
+        
+        # Display the table with the most recent votes first
+        st.dataframe(
+            vote_logs_df[display_cols].sort_values('timestamp', ascending=False).head(100),
+            use_container_width=True
+        )
+
+def generate_ai_prompts(count=5, domains=None, custom_domains=None):
+    """Generate AI-specific prompts for RLHF annotation"""
+    if domains is None:
+        domains = ["AI ethics", "Machine learning", "Computer vision", "Natural language processing", "Robotics"]
+    
+    # System prompt to guide the AI model
+    system_prompt = """
+    You are a prompt generator for an RLHF (Reinforcement Learning from Human Feedback) system. 
+    Create diverse, interesting, and challenging prompts for language models.
+    
+    Each prompt should follow this JSON format:
+    {
+        "id": "unique_id",
+        "text": "The actual prompt text",
+        "metadata": {
+            "domain": "The subject area or domain",
+            "difficulty": "easy|medium|hard",
+            "type": "analytical|creative|factual|ethical",
+            "expected_tokens": approximate number of tokens for a good response
+        }
+    }
+    
+    Ensure the prompts are diverse in terms of:
+    1. Type (analytical questions, creative writing, factual explanations, ethical considerations)
+    2. Difficulty (mix of easy, medium, and hard questions)
+    3. Subject matter (different aspects of specified domains)
+    4. Length (some prompts should elicit short responses, others longer ones)
+    """
+    
+    # Template categories
+    templates = {
+        "explanation": [
+            "Explain {topic} in simple terms.",
+            "How would you describe {topic} to a 10-year-old?",
+            "What is the relationship between {topic} and {related_topic}?",
+            "Compare and contrast {topic} and {related_topic}.",
+            "What are the key principles of {topic}?"
+        ],
+        "creative": [
+            "Write a short poem about {topic}.",
+            "Create a metaphor that explains {topic}.",
+            "If {topic} was a person, what would they be like?",
+            "Tell a short story that illustrates the concept of {topic}.",
+            "Write a dialogue between {topic} and {related_topic}."
+        ],
+        "analysis": [
+            "What are the ethical implications of {topic}?",
+            "How might {topic} change in the next 10 years?",
+            "What are the main criticisms of {topic}?",
+            "How has {topic} evolved over time?",
+            "What are the practical applications of {topic}?"
+        ]
+    }
+    
+    # Topics and related topics
+    topics = {
+        "machine learning": ["artificial intelligence", "data science", "neural networks", "statistics"],
+        "artificial intelligence": ["machine learning", "robotics", "natural language processing", "computer vision"],
+        "deep learning": ["neural networks", "backpropagation", "representation learning", "AI"],
+        "reinforcement learning": ["reward systems", "agent-based learning", "game theory", "decision making"],
+        "natural language processing": ["computational linguistics", "text analysis", "speech recognition", "language models"],
+        "computer vision": ["image processing", "object detection", "facial recognition", "scene understanding"],
+        "ethics in AI": ["bias", "fairness", "transparency", "accountability"],
+        "quantum computing": ["superposition", "entanglement", "qubits", "cryptography"],
+        "blockchain": ["cryptocurrency", "distributed ledgers", "smart contracts", "decentralization"],
+        "internet of things": ["connected devices", "smart homes", "sensors", "automation"]
+    }
+    
+    prompts = []
+    
+    # Generate unique prompts
+    for i in range(count):
+        # Select random category and template
+        category = random.choice(list(templates.keys()))
+        template = random.choice(templates[category])
+        
+        # Select random topic and related topic
+        topic = random.choice(list(topics.keys()))
+        related_topic = random.choice(topics[topic])
+        
+        # Format the template
+        prompt_text = template.format(topic=topic, related_topic=related_topic)
+        
+        # Create prompt object
+        prompt = {
+            "id": f"generated_prompt_{i+1}_{uuid.uuid4().hex[:6]}",
+            "text": prompt_text,
+            "metadata": {
+                "category": category,
+                "topic": topic,
+                "related_topic": related_topic,
+                "generated": True
+            }
+        }
+        
+        prompts.append(prompt)
+    
+    return prompts
+
+def generate_prompts(count=5):
+    """Generate simple template-based prompts"""
+    template_types = {
+        "explanation": [
+            "Explain {topic} in simple terms.",
+            "How does {topic} work?",
+            "What are the key components of {topic}?",
+            "Describe the process of {topic}.",
+            "What is the importance of {topic}?"
+        ],
+        "comparison": [
+            "Compare and contrast {topic_a} and {topic_b}.",
+            "What are the similarities and differences between {topic_a} and {topic_b}?",
+            "How does {topic_a} differ from {topic_b}?",
+            "In what ways are {topic_a} and {topic_b} similar?",
+            "Which is better for {context}: {topic_a} or {topic_b}?"
+        ],
+        "application": [
+            "How is {topic} applied in {field}?",
+            "What are practical applications of {topic}?",
+            "How can {topic} be used to solve problems in {field}?",
+            "Give examples of {topic} being used in real-world scenarios.",
+            "How might {topic} change {field} in the future?"
+        ],
+        "critique": [
+            "What are the limitations of {topic}?",
+            "What ethical concerns surround {topic}?",
+            "What are common criticisms of {topic}?",
+            "How might {topic} be improved?",
+            "What are the risks associated with {topic}?"
+        ],
+        "creative": [
+            "Write a short story involving {topic}.",
+            "Create a dialogue that explains {topic}.",
+            "Write a poem about {topic}.",
+            "If {topic} was a person, describe their personality.",
+            "Write a marketing slogan for {topic}."
+        ]
+    }
+    
+    topics = {
+        "technology": [
+            "artificial intelligence", "machine learning", "blockchain", 
+            "virtual reality", "quantum computing", "cloud computing",
+            "internet of things", "robotics", "5G", "cybersecurity"
+        ],
+        "science": [
+            "gene editing", "renewable energy", "climate change", 
+            "space exploration", "neuroscience", "immunology",
+            "quantum physics", "materials science", "cosmology", "biodiversity"
+        ],
+        "philosophy": [
+            "existentialism", "ethics", "epistemology", "consciousness", 
+            "free will", "moral relativism", "humanism", "nihilism",
+            "determinism", "utilitarianism"
+        ],
+        "society": [
+            "social media", "remote work", "digital privacy", 
+            "economic inequality", "education", "healthcare",
+            "democracy", "urbanization", "globalization", "sustainability"
+        ]
+    }
+    
+    fields = [
+        "healthcare", "education", "finance", "entertainment", 
+        "transportation", "agriculture", "manufacturing", "energy",
+        "retail", "defense", "communications", "public policy"
+    ]
+    
+    prompts = []
+    
+    for i in range(count):
+        # Select a random template type and template
+        template_type = random.choice(list(template_types.keys()))
+        template = random.choice(template_types[template_type])
+        
+        # Select topic category and specific topic(s)
+        category = random.choice(list(topics.keys()))
+        
+        if "{topic_a}" in template and "{topic_b}" in template:
+            # For comparison templates, select two different topics
+            topic_a = random.choice(topics[category])
+            topic_b = random.choice([t for t in topics[category] if t != topic_a])
+            field = random.choice(fields)
+            
+            prompt_text = template.format(
+                topic_a=topic_a,
+                topic_b=topic_b,
+                context=field
+            )
+        elif "{topic}" in template and "{field}" in template:
+            # For application templates
+            topic = random.choice(topics[category])
+            field = random.choice(fields)
+            
+            prompt_text = template.format(
+                topic=topic,
+                field=field
+            )
+        else:
+            # For simple templates with just one topic
+            topic = random.choice(topics[category])
+            prompt_text = template.format(topic=topic)
+        
+        # Create prompt object
+        prompt = {
+            "id": f"template_prompt_{i+1}_{uuid.uuid4().hex[:6]}",
+            "text": prompt_text,
+            "metadata": {
+                "type": template_type,
+                "category": category,
+                "generated": True,
+                "difficulty": random.choice(["easy", "medium", "hard"]),
+                "expected_tokens": random.choice([100, 150, 200, 250, 300, 350, 400])
+            }
+        }
+        
+        prompts.append(prompt)
+    
+    return prompts
+
+def generate_completions(prompt_id, prompt_text, count=3):
+    """Generate completions for a given prompt using DeepSeek API or simulation"""
+    # System prompt to guide the model
+    system_prompt = f"""
+    You are an assistant tasked with generating a high-quality completion for a given prompt.
+    
+    For this completion, aim to be:
+    1. Informative and detailed
+    2. Accurate and factual
+    3. Well-structured and coherent
+    
+    THE PROMPT: {prompt_text}
+    
+    Generate a thoughtful, detailed completion for this prompt. The completion should be self-contained
+    and appropriately address what was asked in the prompt.
+    """
+    
+    # Try to use DeepSeek API if available
+    try:
+        # Attempt to import OpenAI client for DeepSeek API
+        from openai import OpenAI
+        import os
+        import json
+        import sys
+        
+        # Check if API key is available
+        api_key = os.environ.get("DEEPSEEK_API_KEY")
+        if not api_key:
+            raise ImportError("DeepSeek API key not found in environment variables")
+        
+        # Initialize OpenAI client with DeepSeek base URL
+        client = OpenAI(
+            api_key=api_key,
+            base_url="https://api.deepseek.com"
+        )
+        
+        completions = []
+        
+        # Generate each completion with slightly different parameters to ensure diversity
+        for i in range(count):
+            # Adjust temperature and seed for each completion to increase diversity
+            temp = 0.7 + (i * 0.1)  # Increase temperature for each completion
+            
+            # Create a placeholder in the Streamlit UI for streaming
+            if "streamlit" in sys.modules:
+                stream_placeholder = st.empty()
+                stream_placeholder.text("Generating completion...\n\n")
+                stream_text = ""
+            
+            # Make API call with streaming enabled
+            stream = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt_text}
+                ],
+                temperature=min(temp, 1.0),  # Cap at 1.0
+                max_tokens=800,
+                top_p=0.95,
+                frequency_penalty=0.2 if i > 0 else 0.0,  # Add frequency penalty for variety after first completion
+                presence_penalty=0.3 if i > 1 else 0.0,    # Add presence penalty for even more variety on third completion
+                stream=True  # Enable streaming
+            )
+            
+            # Process the stream
+            completion_text = ""
+            for chunk in stream:
+                if chunk.choices[0].delta.content is not None:
+                    content_piece = chunk.choices[0].delta.content
+                    completion_text += content_piece
+                
+                # Update the UI if in Streamlit context
+                if "streamlit" in sys.modules:
+                    stream_text += content_piece
+                    # Update the placeholder with current text
+                    stream_placeholder.text(f"Generating completion {i+1}/{count}...\n\n{stream_text}")
+            
+            # Clear the placeholder once generation is complete
+            if "streamlit" in sys.modules:
+                stream_placeholder.empty()
+            
+            # Create completion object
+            completion = {
+                "id": f"{prompt_id}_completion_{i+1}_{uuid.uuid4().hex[:6]}",
+                "text": completion_text,
+                "metadata": {
+                    "style": "DeepSeek generated",
+                    "generated": True,
+                    "temperature": temp,
+                    "model": "deepseek-chat"
+                }
+            }
+            
+            completions.append(completion)
+            
+            # Add slight delay between calls
+            sleep(0.5)
+        
+        # Log success
+        logger.info(f"Successfully generated {len(completions)} completions using DeepSeek API for prompt: {prompt_id}")
+        
+        return completions
+        
+    except Exception as e:
+        logger.warning(f"Could not use DeepSeek API for completion generation: {e}, falling back to simulation")
+        
+        # Simple templates for different types of completions
+        completion_templates = {
+            "factual": [
+                "{topic} refers to {definition}. Key aspects include {aspect1}, {aspect2}, and {aspect3}. {additional_info}",
+                "When we talk about {topic}, we're discussing {definition}. This involves {aspect1} and {aspect2}. {additional_info}",
+                "{topic} is {definition}. It's characterized by {aspect1}, while also involving {aspect2}. {additional_info}"
+            ],
+            "creative": [
+                "Imagine {topic} as {metaphor}. {aspect1} is like {metaphor_aspect1}, while {aspect2} resembles {metaphor_aspect2}. {conclusion}",
+                "Picture {topic} as {metaphor}. Just as {metaphor_aspect1}, {aspect1} works in similar ways. {conclusion}",
+                "If we think of {topic} as {metaphor}, then {aspect1} would be the {metaphor_aspect1}, and {aspect2} would be the {metaphor_aspect2}. {conclusion}"
+            ],
+            "analytical": [
+                "When analyzing {topic}, we must consider {aspect1}, {aspect2}, and {aspect3}. {critical_point} Furthermore, {additional_analysis}.",
+                "From an analytical perspective, {topic} involves several key considerations. First, {aspect1}. Second, {aspect2}. Finally, {aspect3}. {conclusion}",
+                "A thorough examination of {topic} reveals three important aspects: {aspect1}, {aspect2}, and {aspect3}. {critical_point} This suggests {conclusion}."
+            ],
+            "poetic": [
+                "{adjective1} {topic},\n{verb1} through {location},\n{adjective2} as {simile},\n{conclusion}.",
+                "In the realm of {topic},\nWhere {adjective1} {noun1} {verb1},\nAnd {adjective2} {noun2} {verb2},\n{conclusion}.",
+                "{topic} like {simile},\n{verb1} with {adjective1} grace,\n{verb2} through {location},\n{conclusion}."
+            ]
+        }
+        
+        # Extract possible topic from prompt
+        words = prompt_text.lower().split()
+        potential_topics = [
+            "ai", "machine learning", "deep learning", "artificial intelligence", 
+            "ethics", "data", "algorithms", "neural networks", "language models",
+            "computer vision", "robotics", "automation"
+        ]
+        
+        # Find a topic or use a default
+        found_topic = next((topic for topic in potential_topics if topic in prompt_text.lower()), "technology")
+        
+        # Placeholder values for templates
+        placeholder_data = {
+            "topic": found_topic,
+            "definition": "a set of techniques and approaches for solving complex problems",
+            "aspect1": "data processing",
+            "aspect2": "algorithmic decision-making",
+            "aspect3": "continuous improvement through feedback",
+            "additional_info": "This has implications across various domains including healthcare, finance, and education.",
+            "metaphor": "a garden that needs constant tending",
+            "metaphor_aspect1": "plants need nurturing",
+            "metaphor_aspect2": "garden beds",
+            "conclusion": "This understanding can guide future developments.",
+            "critical_point": "The interplay between these factors is crucial.",
+            "additional_analysis": "we must remain vigilant about unintended consequences",
+            "adjective1": "gleaming",
+            "adjective2": "powerful",
+            "verb1": "flowing",
+            "verb2": "transforming",
+            "noun1": "circuits",
+            "noun2": "algorithms",
+            "location": "digital realms",
+            "simile": "starlight"
+        }
+        
+        completions = []
+        for i in range(count):
+            # Pick completion style based on prompt and index
+            if i == 0:
+                # First completion is more likely to be analytical or factual
+                if "explain" in prompt_text.lower() or "what is" in prompt_text.lower():
+                    styles = ["factual", "analytical"]
+                elif "poem" in prompt_text.lower() or "creative" in prompt_text.lower():
+                    styles = ["poetic", "creative"]
+                elif "analyze" in prompt_text.lower() or "ethical" in prompt_text.lower():
+                    styles = ["analytical", "factual"]
+                else:
+                    styles = ["analytical", "factual", "creative", "poetic"]
+            else:
+                # Second+ completion should be different from first
+                if "explain" in prompt_text.lower() or "what is" in prompt_text.lower():
+                    styles = ["creative", "poetic"]
+                elif "poem" in prompt_text.lower() or "creative" in prompt_text.lower():
+                    styles = ["analytical", "creative"]
+                elif "analyze" in prompt_text.lower() or "ethical" in prompt_text.lower():
+                    styles = ["creative", "poetic"]
+                else:
+                    styles = ["poetic", "creative", "analytical", "factual"]
+            
+            # Select a style for this completion
+            style = random.choice(styles)
+            template = random.choice(completion_templates[style])
+            
+            # Slightly vary the placeholder data for diversity
+            varied_data = placeholder_data.copy()
+            varied_data["conclusion"] = random.choice([
+                "This understanding can guide future developments.",
+                "Such insights help us navigate complex challenges.",
+                "This framework offers valuable perspective.",
+                "The implications of this are far-reaching."
+            ])
+            
+            # Format template with data
+            completion_text = template.format(**varied_data)
+            
+            # Create completion object
+            completion = {
+                "id": f"{prompt_id}_completion_{i+1}_{uuid.uuid4().hex[:6]}",
+                "text": completion_text,
+                "metadata": {
+                    "style": style,
+                    "generated": True
+                }
+            }
+            
+            completions.append(completion)
+        
+        return completions
+
+def save_annotation(annotation_data):
+    """Save annotation data to the vote logs"""
+    vote_log_dir = Path(project_root) / "data" / "vote_logs"
+    vote_log_dir.mkdir(exist_ok=True, parents=True)
+    
+    # Generate a unique filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"vote_{timestamp}_{uuid.uuid4().hex[:8]}.json"
+    
+    # Add timestamp to annotation data
+    annotation_data["timestamp"] = datetime.now().isoformat()
+    
+    # Add additional metadata
+    annotation_data["annotation_version"] = "2.0"  # To track format version
+    
+    # Handle special cases for non-binary preferences
+    is_binary_preference = annotation_data.get("preference") in ["Completion A", "Completion B"]
+    annotation_data["is_binary_preference"] = is_binary_preference
+    
+    # Get model prediction for the same pair if it's a binary preference
+    try:
+        # Only attempt prediction for binary preferences
+        if is_binary_preference:
+            # Import the prediction module
+            sys.path.append(project_root)
+            from utils.vote_predictor.predict import predict_single, load_vote_predictor
+            
+            # Get prompt and completions from the annotation data
+            prompt = annotation_data["prompt"]
+            completion_a = annotation_data["selected_completion"] if annotation_data["preference"] == "Completion A" else annotation_data["rejected_completion"]
+            completion_b = annotation_data["rejected_completion"] if annotation_data["preference"] == "Completion A" else annotation_data["selected_completion"]
+            
+            # Create a unique pair ID for tracking
+            pair_id = f"{annotation_data.get('prompt_id', 'unknown')}-{timestamp}-{uuid.uuid4().hex[:8]}"
+            
+            # Initialize predictor (with mock if model not found)
+            try:
+                predictor = load_vote_predictor(use_mock=False)
+                logger.info("Using real vote predictor model")
+            except Exception as e:
+                logger.warning(f"Could not load real model, using mock predictor: {e}")
+                predictor = load_vote_predictor(use_mock=True)
+            
+            # Make prediction
+            prediction = predict_single(prompt, completion_a, completion_b, predictor=predictor)
+            
+            # Add prediction information to annotation data
+            annotation_data["pair_id"] = pair_id
+            annotation_data["raw_prediction"] = prediction
+            annotation_data["is_model_vote"] = True
+            annotation_data["model_prediction"] = prediction["preferred_completion"]
+            annotation_data["confidence"] = prediction["confidence"]
+            annotation_data["is_confident"] = prediction["confidence"] > 0.8
+            
+            # Log the prediction
+            logger.info(f"Model predicted {prediction['preferred_completion']} with {prediction['confidence']:.4f} confidence")
+            
+            # Check if the model prediction matches human preference
+            correct_prediction = (
+                (prediction["preferred_completion"] == "A" and annotation_data["preference"] == "Completion A") or
+                (prediction["preferred_completion"] == "B" and annotation_data["preference"] == "Completion B")
+            )
+            
+            annotation_data["model_correct"] = correct_prediction
+            
+            # Also log prediction to predictions.jsonl
+            predictions_file = Path(project_root) / "data" / "predictions.jsonl"
+            prediction_record = {
+                "prompt_id": annotation_data.get("prompt_id", "unknown"),
+                "pair_id": pair_id,
+                "prompt": prompt,
+                "completion_a": completion_a,
+                "completion_b": completion_b,
+                "choice": "A" if annotation_data["preference"] == "Completion A" else "B",
+                "confidence": prediction["confidence"],
+                "is_model_vote": True,
+                "timestamp": annotation_data["timestamp"],
+                "raw_prediction": prediction,
+                "quality_metrics": annotation_data.get("quality_metrics", {})
+            }
+            
+            with open(predictions_file, "a") as f:
+                f.write(json.dumps(prediction_record) + "\n")
+        else:
+            # For non-binary preferences, add special flags
+            annotation_data["model_prediction"] = "N/A"
+            annotation_data["model_correct"] = None
+            annotation_data["confidence"] = None
+        
+    except Exception as e:
+        logger.error(f"Error making model prediction: {e}")
+        # Still proceed with saving the annotation even if prediction fails
+    
+    # Save to file
+    try:
+        with open(vote_log_dir / filename, "w") as f:
+            json.dump(annotation_data, f, indent=2)
+        
+        # Also save a copy to a user-specific file for easier tracking
+        user_annotations_file = Path(project_root) / "data" / "user_annotations.jsonl"
+        with open(user_annotations_file, "a") as f:
+            f.write(json.dumps(annotation_data) + "\n")
+            
+        return True
+    except Exception as e:
+        logger.error(f"Error saving annotation: {e}")
+        return False
+
+def get_deepseek_response(messages, system_prompt=None, temperature=0.7):
+    """Get a response from DeepSeek API for the chat interface"""
+    try:
+        # Import OpenAI client for DeepSeek API
+        from openai import OpenAI
+        import os
+        import json
+        
+        # Check if API key is available
+        api_key = os.environ.get("DEEPSEEK_API_KEY")
+        if not api_key:
+            st.warning("DeepSeek API key not found in environment variables. Using fallback response mode.")
+            return generate_fallback_response(messages, system_prompt)
+        
+        # Initialize OpenAI client with DeepSeek base URL
+        client = OpenAI(
+            api_key=api_key,
+            base_url="https://api.deepseek.com"
+        )
+        
+        # Prepare messages for API call
+        api_messages = []
+        if system_prompt:
+            api_messages.append({"role": "system", "content": system_prompt})
+        
+        # Add conversation history
+        for message in messages:
+            api_messages.append({"role": message["role"], "content": message["content"]})
+        
+        # Create a placeholder for streaming
+        response_placeholder = st.empty()
+        
+        # Initialize response text
+        response_text = ""
+        
+        # Make API call with streaming
+        stream = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=api_messages,
+            temperature=temperature,
+            max_tokens=800,
+            stream=True
+        )
+        
+        # Process the stream
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                content_piece = chunk.choices[0].delta.content
+                response_text += content_piece
+                # Update the placeholder with current text
+                response_placeholder.markdown(response_text)
+        
+        # Clear the placeholder
+        response_placeholder.empty()
+        
+        return response_text
+        
+    except Exception as e:
+        # Handle any errors gracefully
+        import traceback
+        error_msg = f"Error connecting to DeepSeek API: {str(e)}"
+        st.warning(f"Encountered an error with DeepSeek API. Using fallback response mode.")
+        st.info(f"Technical details: {str(e)}")
+        return generate_fallback_response(messages, system_prompt)
+
+def generate_fallback_response(messages, system_prompt=None):
+    """Generate a fallback response when DeepSeek API is not available"""
+    # Get the latest user message
+    if not messages:
+        return "I don't have any messages to respond to yet."
+    
+    latest_message = messages[-1]["content"] if messages else ""
+    
+    # Simple rules-based responses for common RLHF questions
+    rlhf_responses = {
+        "what is rlhf": "RLHF (Reinforcement Learning from Human Feedback) is a technique to align AI models with human preferences by using human feedback to create a reward signal that guides model training.",
+        "how does rlhf work": "RLHF works in three main steps: 1) Pretrain a model on a large corpus of text, 2) Collect human preferences on model outputs, 3) Train a reward model based on these preferences, and 4) Fine-tune the model using reinforcement learning to maximize this reward.",
+        "calibration": "Calibration in RLHF refers to ensuring that a model's confidence scores accurately reflect its actual performance. A well-calibrated model will be 70% accurate when it reports 70% confidence.",
+        "drift": "Drift in RLHF refers to how model behavior can shift away from desired performance over time. Drift clusters help identify patterns where the model's predictions no longer align with human preferences.",
+        "preference": "Preference data in RLHF consists of human judgments about which of two or more model outputs is better. These preferences are used to train the reward model.",
+        "alignment": "Alignment in RLHF refers to how well the model's behavior matches human values and expectations. The goal is to create AI systems that are helpful, harmless, and honest.",
+        "calibration error": "Calibration error, often measured as Expected Calibration Error (ECE), quantifies the difference between a model's confidence and its actual accuracy.",
+        "dashboard": "The RLHF Attunement Dashboard visualizes key metrics of the RLHF system, including alignment over time, calibration diagnostics, drift analysis, model evolution, and preference tracking."
+    }
+    
+    # Check for keyword matches in the user's message
+    user_message_lower = latest_message.lower()
+    
+    for keyword, response in rlhf_responses.items():
+        if keyword in user_message_lower:
+            return response
+    
+    # Generic fallback responses
+    import random
+    fallbacks = [
+        "I'm currently operating in fallback mode without access to the DeepSeek API. For detailed RLHF information, please ask about topics like 'alignment', 'calibration', 'preferences', or 'drift'.",
+        "I can provide basic information about RLHF concepts while operating in fallback mode. Try asking about specific RLHF components or check the other dashboard tabs for more detailed visualizations.",
+        "The DeepSeek API is currently unavailable. I can still answer basic questions about RLHF, preferences, calibration, and alignment patterns.",
+        "While in fallback mode, I can offer information about the RLHF process, preference collection, model calibration, and alignment metrics. For more technical assistance, please ensure the DeepSeek API is properly configured."
+    ]
+    
+    return random.choice(fallbacks)
+
+def main():
+    """Main function to run the dashboard"""
+    st.title("RLHF Attunement Dashboard")
+    st.markdown("""
+    This dashboard provides insights into the performance and behavior of the 
+    RLHF system, helping to identify issues and track improvements.
+    """)
+    
+    # Add Getting Started Guide
+    with st.expander("📚 Getting Started Guide", expanded=False):
+        st.markdown("""
+        ## Welcome to the RLHF Attunement Dashboard
+        
+        This dashboard helps you monitor, analyze, and improve your Reinforcement Learning from Human Feedback (RLHF) system.
+        Here's how to get the most out of each tab:
+        
+        ### 🔍 Alignment Over Time
+        - Track how well your model's predictions align with human preferences
+        - Monitor accuracy trends and detect performance shifts
+        - Analyze human-AI agreement patterns
+        
+        ### 🎯 Calibration Diagnostics
+        - Evaluate how well your model's confidence scores match its actual performance
+        - Identify overconfidence or underconfidence issues
+        - Visualize calibration improvements through reliability diagrams
+        
+        ### 🌀 Drift Clusters & Error Zones
+        - Discover clusters of examples where model predictions drift from human preferences
+        - Identify systematic error patterns
+        - Analyze the entropy of drift over time
+        
+        ### 🧬 Model Evolution
+        - Track model performance across different checkpoints
+        - Compare model versions side-by-side
+        - Visualize improvements in key metrics
+        
+        ### 👥 User Preference Timeline
+        - Monitor annotation activity and trends
+        - Identify preference patterns by theme
+        - Analyze the relationship between model predictions and human choices
+        
+        ### 📝 Annotation Interface
+        - Generate prompts and completions for annotation
+        - Provide detailed preference feedback
+        - Build and manage your annotation dataset
+        
+        ### 💬 Chat Interface
+        - Ask questions about RLHF concepts and metrics
+        - Get insights about your model's performance
+        - Export and import chat history for reference
+        
+        ### 💻 Quick Tips:
+        - **Dark Mode**: Toggle dark mode in the Chat Interface tab for reduced eye strain
+        - **Data Import/Export**: Most tabs offer data export options for further analysis
+        - **API Connection**: The dashboard uses DeepSeek API for generation and chat features
+        
+        Ready to get started? Explore any tab to begin!
+        """)
+    
+    # Create tabs
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+        "Alignment Over Time", 
+        "Calibration Diagnostics",
+        "Drift Clusters & Error Zones",
+        "Model Evolution",
+        "User Preference Timeline",
+        "Annotation Interface",
+        "Chat Interface"
+    ])
+    
+    # Load data for all tabs
+    try:
+        # Path to data directory
+        data_dir = Path(project_root) / "data"
+        
+        # Create data directory if it doesn't exist
+        data_dir.mkdir(exist_ok=True, parents=True)
+        
+        # Load vote logs if available
+        vote_logs_dir = data_dir / "vote_logs"
+        vote_logs = []
+        
+        if vote_logs_dir.exists():
+            for log_file in vote_logs_dir.glob("*.json"):
+                try:
+                    with open(log_file, "r") as f:
+                        vote_logs.append(json.load(f))
+                except Exception as e:
+                    logger.warning(f"Error loading vote log file {log_file}: {e}")
+        
+        # Convert to DataFrame
+        if vote_logs:
+            vote_logs_df = pd.DataFrame(vote_logs)
+            # Ensure timestamp is in datetime format
+            if 'timestamp' in vote_logs_df.columns:
+                vote_logs_df['timestamp'] = pd.to_datetime(vote_logs_df['timestamp'])
+        else:
+            vote_logs_df = pd.DataFrame()
+            st.sidebar.warning("No vote logs found. Some visualizations will be empty.")
+        
+        # Load predictions if available
+        predictions_file = data_dir / "predictions.jsonl"
+        predictions = []
+        
+        if predictions_file.exists():
+            with open(predictions_file, "r") as f:
+                for line in f:
+                    try:
+                        predictions.append(json.loads(line.strip()))
+                    except Exception as e:
+                        logger.warning(f"Error parsing prediction line: {e}")
+        
+        # Convert to DataFrame
+        if predictions:
+            predictions_df = pd.DataFrame(predictions)
+            # Ensure timestamp is in datetime format
+            if 'timestamp' in predictions_df.columns:
+                predictions_df['timestamp'] = pd.to_datetime(predictions_df['timestamp'])
+        else:
+            predictions_df = pd.DataFrame()
+            st.sidebar.warning("No prediction data found. Some visualizations will be empty.")
+        
+        # Load calibration history if available
+        calibration_file = Path(project_root) / "models" / "calibration_log.json"
+        
+        if calibration_file.exists():
+            try:
+                with open(calibration_file, "r") as f:
+                    calibration_history = json.load(f)
+            except Exception as e:
+                logger.warning(f"Error loading calibration history: {e}")
+                calibration_history = {"history": []}
+        else:
+            calibration_history = {"history": []}
+        
+        # Load checkpoints if available
+        checkpoints_dir = Path(project_root) / "models" / "vote_predictor_checkpoint"
+        checkpoints = []
+        
+        if checkpoints_dir.exists():
+            checkpoint_info_file = checkpoints_dir / "checkpoint_info.json"
+            
+            if checkpoint_info_file.exists():
+                try:
+                    with open(checkpoint_info_file, "r") as f:
+                        checkpoints = json.load(f)
+                except Exception as e:
+                    logger.warning(f"Error loading checkpoint info: {e}")
+        
+        # Load drift analysis if available
+        drift_clusters_file = Path(project_root) / "models" / "drift_analysis" / "clusters.json"
+        drift_clusters = []
+        
+        if drift_clusters_file.exists():
+            try:
+                with open(drift_clusters_file, "r") as f:
+                    drift_clusters = json.load(f)
+            except Exception as e:
+                logger.warning(f"Error loading drift clusters: {e}")
+        
+        # Load reflection data if available
+        reflection_file = Path(project_root) / "models" / "meta_reflection_log.jsonl"
+        reflection_data = []
+        
+        if reflection_file.exists():
+            with open(reflection_file, "r") as f:
+                for line in f:
+                    try:
+                        reflection_data.append(json.loads(line.strip()))
+                    except Exception as e:
+                        logger.warning(f"Error parsing reflection data line: {e}")
+        
+    except Exception as e:
+        st.sidebar.error(f"Error loading data: {e}")
+        vote_logs_df = pd.DataFrame()
+        predictions_df = pd.DataFrame()
+        calibration_history = {"history": []}
+        checkpoints = []
+        drift_clusters = []
+        reflection_data = []
+    
+    # Tab 1: Alignment Over Time
+    with tab1:
+        st.header("Alignment Over Time")
+        
+        if not vote_logs_df.empty and 'model_correct' in vote_logs_df.columns:
+            # Create accuracy over time plot
+            accuracy_plot = plot_accuracy_over_time(vote_logs_df, window_size=10, calibration_history=calibration_history)
+            st.plotly_chart(accuracy_plot, use_container_width=True)
+            
+            # Add some metrics
+            col1, col2, col3 = st.columns(3)
+            
+            # Overall accuracy
+            overall_accuracy = vote_logs_df['model_correct'].mean() if 'model_correct' in vote_logs_df.columns else None
+            if overall_accuracy is not None:
+                col1.metric("Overall Accuracy", f"{overall_accuracy:.2%}")
+            
+            # Recent accuracy (last 20 votes)
+            recent_votes = vote_logs_df.sort_values('timestamp', ascending=False).head(20)
+            recent_accuracy = recent_votes['model_correct'].mean() if 'model_correct' in recent_votes.columns else None
+            if recent_accuracy is not None:
+                col2.metric("Recent Accuracy (20)", f"{recent_accuracy:.2%}")
+            
+            # Total votes
+            col3.metric("Total Votes", f"{len(vote_logs_df)}")
+            
+            # Human-AI agreement plot
+            st.subheader("Human-AI Agreement")
+            agreement_plot = plot_human_ai_agreement(vote_logs_df)
+            st.plotly_chart(agreement_plot, use_container_width=True)
+        else:
+            st.info("No vote data available for alignment visualization. Please add some votes through the Annotation Interface.")
+    
+    # Tab 2: Calibration Diagnostics
+    with tab2:
+        st.header("Calibration Diagnostics")
+        
+        if not predictions_df.empty and 'confidence' in predictions_df.columns:
+            # Add subtitle explaining the concept of calibration
+            st.markdown("""
+            ### Cognitive Thermoregulation
+            
+            This tab visualizes the model's calibration - how well the model's confidence aligns with its accuracy.
+            Good calibration means that when the model is 70% confident, it's correct 70% of the time.
+            """)
+            
+            # Create columns for metrics
+            col1, col2, col3 = st.columns(3)
+            
+            # Add metrics if available
+            if 'is_prediction_correct' in predictions_df.columns:
+                # Overall accuracy
+                accuracy = predictions_df['is_prediction_correct'].mean() if 'is_prediction_correct' in predictions_df.columns else None
+                if accuracy is not None:
+                    col1.metric("Overall Accuracy", f"{accuracy:.2%}")
+                
+                # Average confidence
+                avg_confidence = predictions_df['confidence'].mean()
+                col2.metric("Avg Confidence", f"{avg_confidence:.2%}")
+                
+                # Calculate basic ECE (Expected Calibration Error)
+                ece = np.mean(np.abs(predictions_df['confidence'] - predictions_df['is_prediction_correct'].astype(float)))
+                col3.metric("Expected Calibration Error", f"{ece:.4f}")
+            
+            # Create tabs within the calibration tab for different visualizations
+            calib_tab1, calib_tab2, calib_tab3 = st.tabs(["Reliability Diagrams", "ECE History", "Confidence Analysis"])
+            
+            with calib_tab1:
+                st.subheader("Reliability Diagrams")
+                st.markdown("""
+                Reliability diagrams show how well-calibrated the model is. The diagonal line represents perfect calibration.
+                When the bars (accuracy) match the dotted line (confidence), the model is well-calibrated.
+                """)
+                
+                # Use the improved visualization methods from utils/dashboard/visualizations.py
+                from utils.dashboard.visualizations import plot_reliability_diagram, plot_pre_post_calibration_comparison
+                
+                # Plot basic reliability diagram
+                reliability_plot = plot_reliability_diagram(predictions_df, num_bins=10)
+                st.plotly_chart(reliability_plot, use_container_width=True)
+                
+                # Check if we have both raw and calibrated confidence values
+                has_calibrated = 'model_prediction_confidence_calibrated' in predictions_df.columns
+                has_raw = 'model_prediction_confidence_raw' in predictions_df.columns
+                
+                if has_calibrated and has_raw:
+                    # Add pre/post calibration comparison
+                    st.subheader("Pre vs Post Calibration Comparison")
+                    comparison_plot = plot_pre_post_calibration_comparison(predictions_df, num_bins=10)
+                    st.plotly_chart(comparison_plot, use_container_width=True)
+            
+            with calib_tab2:
+                st.subheader("ECE History")
+                st.markdown("""
+                Expected Calibration Error (ECE) measures the difference between confidence and accuracy.
+                Lower values indicate better calibration.
+                """)
+                
+                # Import the ECE history visualization
+                from utils.dashboard.visualizations import plot_ece_history
+                
+                # Plot ECE history if available
+                if calibration_history and 'history' in calibration_history and calibration_history['history']:
+                    ece_plot = plot_ece_history(calibration_history)
+                    st.plotly_chart(ece_plot, use_container_width=True)
+                    
+                    # Display calibration history table with formatted timestamps
+                    st.subheader("Calibration History")
+                    history_df = pd.DataFrame(calibration_history['history'])
+                    
+                    # Ensure timestamp is datetime and format it
+                    if 'timestamp' in history_df.columns:
+                        history_df['timestamp'] = pd.to_datetime(history_df['timestamp'])
+                        history_df = history_df.sort_values('timestamp', ascending=False)
+                        history_df['timestamp'] = history_df['timestamp'].apply(lambda x: format_timestamp(x))
+                    
+                    # Format ECE values for display
+                    if 'ece_before' in history_df.columns:
+                        history_df['ece_before'] = history_df['ece_before'].apply(lambda x: f"{x:.4f}")
+                    if 'ece_after' in history_df.columns:
+                        history_df['ece_after'] = history_df['ece_after'].apply(lambda x: f"{x:.4f}")
+                    
+                    # Display the formatted table
+                    st.dataframe(history_df, use_container_width=True)
+                else:
+                    st.info("No calibration history available yet.")
+            
+            with calib_tab3:
+                st.subheader("Confidence-Correctness Analysis")
+                st.markdown("""
+                This visualization shows how confidence relates to correctness across different data categories.
+                Red areas indicate overconfidence, while blue areas indicate underconfidence.
+                """)
+                
+                # Import the confidence-correctness heatmap visualization
+                from utils.dashboard.visualizations import plot_confidence_correctness_heatmap
+                
+                # Check if we have theme or category data in the predictions
+                theme_column = None
+                for possible_column in ['theme', 'category', 'domain', 'topic']:
+                    if possible_column in predictions_df.columns:
+                        theme_column = possible_column
+                        break
+                
+                # Plot confidence-correctness heatmap
+                heatmap_plot = plot_confidence_correctness_heatmap(predictions_df, theme_column=theme_column)
+                st.plotly_chart(heatmap_plot, use_container_width=True)
+                
+                # Add Self-Awareness Evolution plot if we have enough data
+                from utils.dashboard.visualizations import plot_self_awareness_evolution
+                
+                if len(predictions_df) >= 10:
+                    st.subheader("Self-Awareness Evolution")
+                    st.markdown("""
+                    This visualization shows how the model's self-awareness (calibration) evolves over time.
+                    """)
+                    
+                    awareness_plot = plot_self_awareness_evolution(predictions_df, calibration_history)
+                    st.plotly_chart(awareness_plot, use_container_width=True)
+            
+            # Plot error types if available
+            if 'prediction_error_type' in predictions_df.columns:
+                st.subheader("Error Type Distribution")
+                error_plot = plot_error_types(predictions_df)
+                st.plotly_chart(error_plot, use_container_width=True)
+        else:
+            st.info("No prediction data available for calibration visualization. Run some predictions or collect votes to generate this data.")
+            
+            # Add sample visualization to show what it would look like
+            st.subheader("Sample Reliability Diagram (Demo)")
+            st.markdown("""
+            This is a sample visualization to show what the reliability diagram would look like with real data.
+            Generate some predictions to see actual calibration metrics.
+            """)
+            
+            # Generate sample data
+            sample_size = 100
+            sample_data = {
+                'confidence': np.random.beta(5, 2, sample_size),
+                'is_prediction_correct': np.random.choice([True, False], sample_size, p=[0.7, 0.3])
+            }
+            sample_df = pd.DataFrame(sample_data)
+            
+            # Plot sample reliability diagram
+            from utils.dashboard.visualizations import plot_reliability_diagram
+            sample_plot = plot_reliability_diagram(sample_df, num_bins=10)
+            st.plotly_chart(sample_plot, use_container_width=True)
+    
+    # Tab 3: Drift Clusters & Error Zones
+    with tab3:
+        st.header("Drift Clusters & Error Zones")
+        
+        # Add subtitle explaining the concept of drift clusters
+        st.markdown("""
+        ### Tissue Fragmentation
+        
+        This tab visualizes clusters of examples where the model's predictions drift from human preferences,
+        similar to fragmented tissue in a symbolic organism. It helps identify systematic error patterns
+        and preference misalignment zones.
+        """)
+        
+        if drift_clusters and reflection_data:
+            # Create tabs for different drift visualizations
+            drift_tab1, drift_tab2, drift_tab3 = st.tabs(["Cluster Visualization", "Cluster Statistics", "Drift Entropy"])
+            
+            with drift_tab1:
+                st.subheader("Drift Cluster Visualization")
+                
+                # Use the improved visualization methods from utils/dashboard/visualizations.py
+                from utils.dashboard.visualizations import plot_enhanced_drift_clusters, generate_umap_for_drift_clusters
+                
+                # Add user controls for visualization options
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    viz_type = st.selectbox(
+                        "Visualization Type",
+                        ["UMAP", "t-SNE", "PCA"],
+                        index=0
+                    )
+                
+                with col2:
+                    dimensions = st.radio(
+                        "Dimensions",
+                        ["2D", "3D"],
+                        index=0
+                    )
+                
+                with col3:
+                    color_by = st.selectbox(
+                        "Color By",
+                        ["cluster_id", "error_rate", "size", "drift_delta"],
+                        index=0
+                    )
+                
+                # Convert options to parameters
+                use_umap = viz_type == "UMAP"
+                use_3d = dimensions == "3D"
+                
+                # Display the visualization
+                with st.spinner("Generating drift cluster visualization..."):
+                    drift_plot = plot_enhanced_drift_clusters(
+                        drift_clusters, 
+                        reflection_data,
+                        use_umap=use_umap,
+                        use_3d=use_3d,
+                        color_by=color_by
+                    )
+                    st.plotly_chart(drift_plot, use_container_width=True)
+                
+                # Add explanation
+                st.markdown("""
+                This visualization shows clusters of examples where the model's predictions drift from human preferences.
+                Each point represents an example, colored by the selected attribute. Similar examples are grouped together
+                based on their features, revealing patterns in model behavior.
+                """)
+            
+            with drift_tab2:
+                st.subheader("Cluster Statistics")
+                
+                # Import the cluster stats table function
+                from utils.dashboard.visualizations import prepare_cluster_stats_table
+                
+                # Generate and display the cluster stats table
+                cluster_stats = prepare_cluster_stats_table(drift_clusters)
+                
+                if isinstance(cluster_stats, pd.DataFrame) and not cluster_stats.empty:
+                    st.dataframe(cluster_stats, use_container_width=True)
+                    
+                    # Add download button for the cluster stats
+                    csv = cluster_stats.to_csv(index=False)
+                    st.download_button(
+                        label="Download Cluster Stats as CSV",
+                        data=csv,
+                        file_name="drift_cluster_stats.csv",
+                        mime="text/csv"
+                    )
+                else:
+                    st.info("No cluster statistics available.")
+                
+                # Add a section for detailed cluster inspection
+                st.subheader("Cluster Inspection")
+                
+                # Get unique cluster IDs
+                cluster_ids = sorted(set(c.get('cluster_id') for c in drift_clusters if 'cluster_id' in c))
+                
+                if cluster_ids:
+                    # Select a cluster to inspect
+                    selected_cluster = st.selectbox(
+                        "Select a cluster to inspect",
+                        cluster_ids
+                    )
+                    
+                    # Filter examples by cluster
+                    cluster_examples = [c for c in drift_clusters if c.get('cluster_id') == selected_cluster]
+                    
+                    if cluster_examples:
+                        st.subheader(f"Examples in Cluster {selected_cluster}")
+                        
+                        # Display examples in an expander
+                        for i, example in enumerate(cluster_examples[:5]):  # Show first 5 examples
+                            with st.expander(f"Example {i+1}"):
+                                # Display prompt if available
+                                if 'prompt' in example:
+                                    st.markdown("**Prompt:**")
+                                    st.write(example['prompt'])
+                                
+                                # Display completions if available
+                                if 'completion_a' in example and 'completion_b' in example:
+                                    col1, col2 = st.columns(2)
+                                    
+                                    with col1:
+                                        st.markdown("**Completion A:**")
+                                        st.write(example['completion_a'])
+                                    
+                                    with col2:
+                                        st.markdown("**Completion B:**")
+                                        st.write(example['completion_b'])
+                                
+                                # Display prediction info if available
+                                if 'human_choice' in example and 'model_choice' in example:
+                                    st.markdown(f"**Human chose: {example['human_choice']}**")
+                                    st.markdown(f"**Model chose: {example['model_choice']}**")
+                                    st.markdown(f"**Agreement: {example['human_choice'] == example['model_choice']}**")
+                                
+                                # Display confidence if available
+                                if 'confidence' in example:
+                                    st.markdown(f"**Model confidence: {example['confidence']:.2%}**")
+                        
+                        # If there are more examples, show a note
+                        if len(cluster_examples) > 5:
+                            st.info(f"Showing 5 of {len(cluster_examples)} examples in this cluster.")
+            
+            with drift_tab3:
+                st.subheader("Drift Entropy Over Time")
+                
+                # Import the drift entropy visualization
+                from utils.dashboard.visualizations import plot_cluster_entropy_over_time
+                
+                # Generate and display the drift entropy plot
+                with st.spinner("Calculating drift entropy..."):
+                    entropy_plot = plot_cluster_entropy_over_time(drift_clusters)
+                    st.plotly_chart(entropy_plot, use_container_width=True)
+                
+                # Add explanation
+                st.markdown("""
+                This visualization shows how the entropy of drift clusters changes over time.
+                Higher entropy indicates more disorder and fragmentation in the system,
+                while lower entropy suggests more coherent error patterns.
+                """)
+                
+                # Add drift alerts timeline if data is available
+                from utils.dashboard.visualizations import plot_drift_alerts_timeline
+                
+                st.subheader("Drift Alerts Timeline")
+                
+                # Create placeholder for drift alerts
+                drift_analysis = {"alerts": []}
+                
+                # Check if drift_clusters has timestamp information
+                has_timestamps = any('timestamp' in c for c in drift_clusters)
+                
+                if has_timestamps:
+                    # Generate drift alerts timeline
+                    alerts_plot = plot_drift_alerts_timeline(drift_analysis, reflection_data)
+                    st.plotly_chart(alerts_plot, use_container_width=True)
+                else:
+                    st.info("No drift alert data available with timestamps.")
+        else:
+            st.info("No drift cluster data available. Run the drift analysis to generate drift clusters.")
+            
+            # Add a sample visualization
+            st.subheader("Sample Drift Cluster Visualization (Demo)")
+            st.markdown("""
+            This is a sample visualization to show what the drift cluster visualization would look like with real data.
+            Run drift analysis to see actual clusters.
+            """)
+            
+            # Generate sample data
+            sample_size = 100
+            sample_clusters = []
+            
+            for i in range(3):  # Create 3 sample clusters
+                cluster_size = random.randint(20, 40)
+                for j in range(cluster_size):
+                    # Create a sample point in 2D space with some randomness
+                    x = i * 3 + random.normalvariate(0, 0.5)
+                    y = i * 2 + random.normalvariate(0, 0.5)
+                    
+                    sample_clusters.append({
+                        'cluster_id': i + 1,
+                        'error_rate': random.uniform(0.1, 0.9),
+                        'size': cluster_size,
+                        'drift_delta': random.uniform(0.1, 0.5),
+                        'umap_x': x,
+                        'umap_y': y
+                    })
+            
+            # Create a sample plot
+            fig = go.Figure()
+            
+            # Add scatter trace for each cluster
+            for cluster_id in range(1, 4):
+                cluster_points = [p for p in sample_clusters if p['cluster_id'] == cluster_id]
+                
+                fig.add_trace(
+                    go.Scatter(
+                        x=[p['umap_x'] for p in cluster_points],
+                        y=[p['umap_y'] for p in cluster_points],
+                        mode='markers',
+                        name=f'Cluster {cluster_id}',
+                        marker=dict(
+                            size=10,
+                            opacity=0.7
+                        )
+                    )
+                )
+            
+            # Update layout
+            fig.update_layout(
+                title="Sample Drift Clusters Visualization",
+                xaxis_title="UMAP Dimension 1",
+                yaxis_title="UMAP Dimension 2",
+                legend_title="Cluster",
+                hovermode="closest"
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # Tab 4: Model Evolution
+    with tab4:
+        st.header("Model Evolution")
+        
+        # Add subtitle explaining the concept of model evolution
+        st.markdown("""
+        ### Symbolic Anatomy
+        
+        This tab visualizes how the model evolves over time through training, fine-tuning, and calibration.
+        It allows you to compare different model versions and track improvements in performance metrics.
+        """)
+        
+        if checkpoints:
+            # Create tabs for different model evolution visualizations
+            model_tab1, model_tab2, model_tab3 = st.tabs(["Checkpoint Timeline", "Version Comparison", "Performance Metrics"])
+            
+            with model_tab1:
+                # Display checkpoints timeline
+                st.subheader("Model Checkpoint Timeline")
+                st.markdown("""
+                This timeline shows when different model versions were created, along with key metrics
+                for each checkpoint.
+                """)
+                display_checkpoints_timeline(checkpoints)
+            
+            with model_tab2:
+                st.subheader("Model Version Comparison")
+                st.markdown("""
+                Compare two model versions to see how performance and behavior have changed.
+                Select two checkpoints to see a detailed comparison.
+                """)
+                
+                # Import the delta visualization function
+                from utils.dashboard.visualizations import plot_model_checkpoint_deltas
+                
+                # Get checkpoint versions
+                checkpoint_versions = sorted(set(c.get('version') for c in checkpoints if 'version' in c))
+                
+                if len(checkpoint_versions) >= 2:
+                    # Create two columns for checkpoint selection
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        base_version = st.selectbox(
+                            "Base Checkpoint",
+                            checkpoint_versions,
+                            index=0
+                        )
+                    
+                    with col2:
+                        # Make sure to not select the same checkpoint
+                        comparison_versions = [v for v in checkpoint_versions if v != base_version]
+                        comparison_version = st.selectbox(
+                            "Comparison Checkpoint",
+                            comparison_versions,
+                            index=0 if len(comparison_versions) > 0 else 0
+                        )
+                    
+                    if base_version and comparison_version:
+                        # Find the checkpoint objects
+                        base_checkpoint = next((c for c in checkpoints if c.get('version') == base_version), None)
+                        comparison_checkpoint = next((c for c in checkpoints if c.get('version') == comparison_version), None)
+                        
+                        if base_checkpoint and comparison_checkpoint:
+                            # Generate and display the delta visualization
+                            delta_plot = plot_model_checkpoint_deltas(base_checkpoint, comparison_checkpoint)
+                            st.plotly_chart(delta_plot, use_container_width=True)
+                            
+                            # Display side-by-side reliability diagram if we have the data
+                            if predictions_df is not None and not predictions_df.empty:
+                                from utils.dashboard.visualizations import plot_side_by_side_reliability_diagrams
+                                
+                                # Create two dataframes with different confidence values (simulating different models)
+                                # In a real implementation, we would load the actual prediction data for each model version
+                                df1 = predictions_df.copy()
+                                df2 = predictions_df.copy()
+                                
+                                # For demonstration, modify the confidence values slightly
+                                if 'confidence' in df2.columns:
+                                    df2['confidence'] = df2['confidence'].apply(lambda x: min(1.0, max(0.0, x + np.random.normal(0, 0.1))))
+                                
+                                reliability_comparison = plot_side_by_side_reliability_diagrams(
+                                    df1, 
+                                    df2, 
+                                    checkpoint1_name=base_version,
+                                    checkpoint2_name=comparison_version
+                                )
+                                st.plotly_chart(reliability_comparison, use_container_width=True)
+                        else:
+                            st.info("Could not find complete data for the selected checkpoints.")
+                else:
+                    st.info("Need at least two checkpoints to compare. Only found {len(checkpoint_versions)} checkpoint(s).")
+            
+            with model_tab3:
+                st.subheader("Performance Metrics Across Versions")
+                st.markdown("""
+                Track how different metrics have evolved across model versions.
+                """)
+                
+                # Create a DataFrame from checkpoints data
+                checkpoints_df = pd.DataFrame(checkpoints)
+                
+                # Ensure we have the necessary columns
+                required_columns = ['version', 'timestamp']
+                metric_columns = ['accuracy', 'calibration_error', 'training_samples']
+                
+                # Check if we have the required columns
+                has_required = all(col in checkpoints_df.columns for col in required_columns)
+                has_metrics = any(col in checkpoints_df.columns for col in metric_columns)
+                
+                if has_required and has_metrics:
+                    # Convert timestamp to datetime
+                    if 'timestamp' in checkpoints_df.columns:
+                        checkpoints_df['timestamp'] = pd.to_datetime(checkpoints_df['timestamp'])
+                        checkpoints_df = checkpoints_df.sort_values('timestamp')
+                    
+                    # Create a line chart for each metric
+                    for metric in metric_columns:
+                        if metric in checkpoints_df.columns:
+                            # Create a line chart
+                            fig = px.line(
+                                checkpoints_df,
+                                x='timestamp',
+                                y=metric,
+                                markers=True,
+                                hover_data=['version'],
+                                title=f"{metric.replace('_', ' ').title()} Over Time"
+                            )
+                            
+                            # Update layout
+                            fig.update_layout(
+                                xaxis_title="Date",
+                                yaxis_title=metric.replace('_', ' ').title(),
+                                hovermode="x unified"
+                            )
+                            
+                            st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("Checkpoint data is missing required columns for metrics visualization.")
+        else:
+            st.info("No model checkpoint data available. Train a model to see checkpoint information.")
+            
+            # Add a sample visualization
+            st.subheader("Sample Model Evolution Visualization (Demo)")
+            st.markdown("""
+            This is a sample visualization to show what the model evolution visualization would look like with real data.
+            Train a model to see actual evolution metrics.
+            """)
+            
+            # Generate sample data for a timeline
+            sample_size = 5
+            current_date = datetime.now()
+            sample_checkpoints = []
+            
+            for i in range(sample_size):
+                checkpoint_date = current_date - timedelta(days=(sample_size - i) * 7)
+                accuracy = 0.7 + i * 0.05
+                sample_checkpoints.append({
+                    'version': f"v{i+1}.0",
+                    'timestamp': checkpoint_date,
+                    'accuracy': min(0.95, accuracy),
+                    'calibration_error': max(0.05, 0.2 - i * 0.03),
+                    'training_samples': 1000 * (i + 1)
+                })
+            
+            # Create a sample timeline plot
+            sample_df = pd.DataFrame(sample_checkpoints)
+            
+            fig = px.line(
+                sample_df,
+                x='timestamp',
+                y='accuracy',
+                markers=True,
+                hover_data=['version', 'calibration_error', 'training_samples'],
+                title="Sample Accuracy Evolution Over Time"
+            )
+            
+            # Update layout
+            fig.update_layout(
+                xaxis_title="Date",
+                yaxis_title="Accuracy",
+                yaxis=dict(range=[0, 1]),
+                hovermode="x unified"
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # Tab 5: User Preference Timeline
+    with tab5:
+        st.header("User Preference Timeline")
+        
+        # Add subtitle explaining the concept of preference timeline
+        st.markdown("""
+        ### Human-System Entanglement
+        
+        This tab visualizes how human preferences interact with and influence the system over time.
+        It tracks the evolution of preference patterns and theme alignment.
+        """)
+        
+        if not vote_logs_df.empty:
+            # Create tabs for different preference visualizations
+            pref_tab1, pref_tab2, pref_tab3 = st.tabs(["Timeline", "Theme Analysis", "Preference Patterns"])
+            
+            with pref_tab1:
+                # Display preference timeline with the existing function
+                display_preference_timeline(vote_logs_df)
+            
+            with pref_tab2:
+                st.subheader("Theme Analysis")
+                st.markdown("""
+                This section analyzes the thematic aspects of human preferences and how they
+                align with model predictions.
+                """)
+                
+                # Import theme visualization functions
+                from utils.dashboard.visualizations import generate_annotation_wordcloud, plot_theme_alignment_shifts
+                
+                # Generate and display wordcloud of annotation content
+                if not vote_logs_df.empty:
+                    # Check which columns are available for content analysis
+                    text_columns = ['prompt', 'selected_completion', 'rejected_completion']
+                    available_columns = [col for col in text_columns if col in vote_logs_df.columns]
+                    
+                    if available_columns:
+                        # Let user select which text to analyze
+                        selected_column = st.selectbox(
+                            "Select content to analyze:",
+                            available_columns,
+                            index=0
+                        )
+                        
+                        st.subheader(f"Word Cloud: {selected_column.replace('_', ' ').title()}")
+                        
+                        # Generate the wordcloud
+                        wordcloud_fig = generate_annotation_wordcloud(
+                            vote_logs_df,
+                            column_name=selected_column,
+                            min_word_length=3,
+                            max_words=100
+                        )
+                        
+                        # Check if we got a valid wordcloud image (base64 string)
+                        if wordcloud_fig:
+                            # Display the image using st.image instead of st.plotly_chart
+                            st.image(f"data:image/png;base64,{wordcloud_fig}", use_container_width=True)
+                        else:
+                            st.warning("Could not generate wordcloud. Ensure wordcloud package is installed with: pip install wordcloud")
+                        
+                        st.markdown("""
+                        The word cloud highlights the most common words in user prompts or selected completions.
+                        Larger words appear more frequently, giving insight into the thematic focus of human feedback.
+                        """)
+                    else:
+                        st.info("No text content available for theme analysis.")
+                
+                # Check if we have time-series data to show theme alignment shifts
+                has_timestamps = 'timestamp' in vote_logs_df.columns
+                has_preference = 'preference' in vote_logs_df.columns or 'choice' in vote_logs_df.columns
+                
+                if has_timestamps and has_preference:
+                    st.subheader("Theme Alignment Shifts Over Time")
+                    
+                    # Try to identify theme column
+                    theme_column = None
+                    for possible_column in ['theme', 'category', 'domain', 'topic']:
+                        if possible_column in vote_logs_df.columns:
+                            theme_column = possible_column
+                            break
+                    
+                    if theme_column:
+                        # Generate alignment shifts visualization
+                        shifts_plot = plot_theme_alignment_shifts(vote_logs_df, theme_column=theme_column)
+                        st.plotly_chart(shifts_plot, use_container_width=True)
+                    else:
+                        # If no theme column exists, create artificial themes for demonstration
+                        st.info("No theme/category data found. Showing sample visualization with artificial themes.")
+                        
+                        # Create a copy with artificial themes
+                        sample_df = vote_logs_df.copy()
+                        
+                        # Generate random themes
+                        themes = ["Ethics", "Performance", "Creativity", "Factuality", "Clarity"]
+                        sample_df['theme'] = np.random.choice(themes, size=len(sample_df))
+                        
+                        # Generate alignment shifts visualization with artificial themes
+                        sample_shifts_plot = plot_theme_alignment_shifts(sample_df, theme_column='theme')
+                        st.plotly_chart(sample_shifts_plot, use_container_width=True)
+            
+            with pref_tab3:
+                st.subheader("Preference Patterns")
+                st.markdown("""
+                This section identifies patterns in how humans vote and how these patterns relate to
+                model confidence and accuracy.
+                """)
+                
+                # Add correlation analysis between human preferences and model predictions
+                if 'model_correct' in vote_logs_df.columns and not vote_logs_df.empty:
+                    # Create summary metrics
+                    col1, col2, col3 = st.columns(3)
+                    
+                    # Calculate agreement rate
+                    agreement_rate = vote_logs_df['model_correct'].mean()
+                    col1.metric("Human-AI Agreement Rate", f"{agreement_rate:.2%}")
+                    
+                    # Calculate preference consistency if we have enough data
+                    if len(vote_logs_df) >= 10 and 'prompt_id' in vote_logs_df.columns:
+                        # Group by prompt_id and see how consistent preferences are
+                        prompt_counts = vote_logs_df['prompt_id'].value_counts()
+                        prompts_with_multiple_votes = prompt_counts[prompt_counts > 1].index
+                        
+                        if len(prompts_with_multiple_votes) > 0:
+                            consistency_scores = []
+                            
+                            for prompt_id in prompts_with_multiple_votes:
+                                prompt_votes = vote_logs_df[vote_logs_df['prompt_id'] == prompt_id]
+                                
+                                # Check if we have preference column and more than one vote
+                                if 'preference' in prompt_votes.columns and len(prompt_votes) > 1:
+                                    preferences = prompt_votes['preference'].value_counts()
+                                    max_votes = preferences.max()
+                                    total_votes = preferences.sum()
+                                    consistency = max_votes / total_votes
+                                    consistency_scores.append(consistency)
+                            
+                            if consistency_scores:
+                                avg_consistency = np.mean(consistency_scores)
+                                col2.metric("Preference Consistency", f"{avg_consistency:.2%}")
+                    
+                    # Add confidence-agreement correlation if available
+                    if 'confidence' in vote_logs_df.columns and 'model_correct' in vote_logs_df.columns:
+                        corr = vote_logs_df['confidence'].corr(vote_logs_df['model_correct'].astype(float))
+                        col3.metric("Confidence-Agreement Correlation", f"{corr:.3f}")
+                    
+                    # Create a scatter plot of confidence vs correctness
+                    if 'confidence' in vote_logs_df.columns and 'model_correct' in vote_logs_df.columns:
+                        st.subheader("Confidence vs. Agreement")
+                        
+                        # Create jittered data to avoid overplotting
+                        jitter_df = vote_logs_df.copy()
+                        jitter_df['jittered_confidence'] = jitter_df['confidence'] + np.random.normal(0, 0.01, len(jitter_df))
+                        jitter_df['jittered_correct'] = jitter_df['model_correct'].astype(float) + np.random.normal(0, 0.03, len(jitter_df))
+                        
+                        # Create scatter plot
+                        fig = px.scatter(
+                            jitter_df,
+                            x='jittered_confidence',
+                            y='jittered_correct',
+                            color='model_correct',
+                            color_discrete_map={True: 'green', False: 'red'},
+                            opacity=0.7,
+                            title="Model Confidence vs. Human-AI Agreement",
+                            labels={
+                                'jittered_confidence': 'Model Confidence',
+                                'jittered_correct': 'Agreement with Human (1=Yes, 0=No)',
+                                'model_correct': 'Agreement'
+                            },
+                            hover_data=['timestamp', 'confidence']
+                        )
+                        
+                        # Add best fit line
+                        fig.add_trace(
+                            go.Scatter(
+                                x=[0, 1],
+                                y=[0.5, 0.5 + corr/2],
+                                mode='lines',
+                                name='Trend',
+                                line=dict(color='blue', dash='dash'),
+                                opacity=0.5
+                            )
+                        )
+                        
+                        # Update layout
+                        fig.update_layout(
+                            xaxis_title="Model Confidence",
+                            yaxis_title="Agreement with Human",
+                            xaxis=dict(range=[0, 1]),
+                            yaxis=dict(range=[-0.1, 1.1]),
+                            hovermode="closest"
+                        )
+                        
+                        st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No vote data available for preference timeline. Please add some votes through the Annotation Interface.")
+            
+            # Add sample visualizations to show what it would look like
+            st.subheader("Sample Preference Timeline (Demo)")
+            st.markdown("""
+            This is a sample visualization to show what the preference timeline would look like with real data.
+            Generate some votes to see actual preference patterns.
+            """)
+            
+            # Generate sample data
+            sample_size = 20
+            current_date = datetime.now()
+            sample_votes = []
+            
+            for i in range(sample_size):
+                vote_date = current_date - timedelta(days=i)
+                sample_votes.append({
+                    'date': vote_date.date(),
+                    'vote_count': random.randint(3, 15)
+                })
+            
+            # Create a sample bar chart
+            sample_df = pd.DataFrame(sample_votes)
+            
+            fig = px.bar(
+                sample_df,
+                x='date',
+                y='vote_count',
+                title="Sample Daily Annotation Volume",
+                color_discrete_sequence=['#2D87BB']
+            )
+            
+            # Update layout
+            fig.update_layout(
+                xaxis_title="Date",
+                yaxis_title="Number of Annotations",
+                hovermode="x unified"
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # Tab 6: Annotation Interface
+    with tab6:
+        st.header("Annotation Interface")
+        
+        # Add a description section at the top
+        st.markdown("""
+        This interface allows you to generate prompts, create completions, and annotate them with your preferences.
+        Your annotations help train and improve the RLHF system.
+        """)
+        
+        # Use tabs to organize the interface
+        gen_tab, ann_tab, history_tab = st.tabs(["Generate Content", "Annotate", "Annotation History"])
+        
+        with gen_tab:
+            st.subheader("Generate Content")
+            
+            # Create a visually appealing container
+            with st.container():
+                st.markdown("""
+                <div style="border-radius: 10px; background-color: #f8f9fa; padding: 15px; margin-bottom: 20px;">
+                    <h4 style="color: #1E88E5;">🚀 Content Generation</h4>
+                    <p>Generate prompts and completions for annotation. The more diverse your annotations, the better the RLHF model will learn.</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # Create tabs for different generation options
+            gen_prompt_tab, template_tab, batch_tab = st.tabs(["Basic Generation", "Template Library", "Batch Generation"])
+            
+            with gen_prompt_tab:
+                # Create two columns for generation options
+                prompt_col, completion_col = st.columns(2)
+                
+                with prompt_col:
+                    st.markdown("#### Prompt Generation")
+                    # Number of prompts to generate
+                    num_prompts = st.number_input("Number of prompts", min_value=1, max_value=10, value=3)
+                    
+                    # Add more options for prompt generation
+                    prompt_type = st.selectbox(
+                        "Prompt type",
+                        ["Mixed", "Explanation", "Creative", "Analytical", "Comparison"],
+                        index=0
+                    )
+                    
+                    # Generate prompts
+                    if st.button("Generate Prompts", use_container_width=True):
+                        with st.spinner("Generating prompts..."):
+                            prompts = generate_prompts(count=num_prompts)
+                            st.session_state.generated_prompts = prompts
+                            st.success(f"Generated {len(prompts)} prompts")
+                
+                with completion_col:
+                    st.markdown("#### Manual Prompt Entry")
+                    # Allow manual prompt entry
+                    manual_prompt = st.text_area("Enter your own prompt", height=100)
+                    if st.button("Add Custom Prompt", use_container_width=True) and manual_prompt:
+                        # Create a custom prompt object
+                        custom_prompt = {
+                            "id": f"custom_prompt_{uuid.uuid4().hex[:8]}",
+                            "text": manual_prompt,
+                            "metadata": {
+                                "type": "custom",
+                                "generated": False
+                            }
+                        }
+                        # Add to generated prompts
+                        if 'generated_prompts' not in st.session_state:
+                            st.session_state.generated_prompts = []
+                        st.session_state.generated_prompts.append(custom_prompt)
+                        st.success("Custom prompt added")
+            
+            with template_tab:
+                st.markdown("#### Prompt Templates")
+                st.markdown("""
+                Use these templates to quickly generate specific types of prompts for annotation.
+                Select a template, customize it if needed, and add it to your prompt collection.
+                """)
+                
+                # Define templates
+                templates = {
+                    "Ethical Dilemma": "Consider the following ethical dilemma in AI: {dilemma}. What approach should be taken and why?",
+                    "Technical Explanation": "Explain how {technology} works, including its key advantages and limitations.",
+                    "Compare Models": "Compare and contrast {model_a} and {model_b} in terms of their capabilities, use cases, and limitations.",
+                    "Creative Writing": "Write a short {genre} story about {theme} that illustrates {concept}.",
+                    "Factual Analysis": "Analyze the impact of {event} on {field}, including both immediate and long-term effects."
+                }
+                
+                # Template selection
+                selected_template = st.selectbox(
+                    "Select a template",
+                    list(templates.keys())
+                )
+                
+                # Display selected template with placeholders
+                template_text = templates[selected_template]
+                st.markdown(f"**Template:**\n\n{template_text}")
+                
+                # Extract placeholders
+                import re
+                placeholders = re.findall(r"\{(\w+)\}", template_text)
+                
+                # Create input fields for each placeholder
+                placeholder_values = {}
+                
+                for ph in placeholders:
+                    ph_display = ph.replace("_", " ").title()
+                    placeholder_values[ph] = st.text_input(f"{ph_display}")
+                
+                # Preview the completed template
+                preview_text = template_text
+                for ph, value in placeholder_values.items():
+                    if value:
+                        preview_text = preview_text.replace(f"{{{ph}}}", value)
+                
+                st.markdown("**Preview:**")
+                st.markdown(f"<div style='padding: 10px; background-color: #f0f0f0; border-left: 5px solid #2e86de;'>{preview_text}</div>", unsafe_allow_html=True)
+                
+                # Add the completed template as a prompt
+                if st.button("Add Template to Prompts", use_container_width=True):
+                    # Check if all placeholders have values
+                    if all(placeholder_values.values()):
+                        # Create a custom prompt object
+                        template_prompt = {
+                            "id": f"template_prompt_{uuid.uuid4().hex[:8]}",
+                            "text": preview_text,
+                            "metadata": {
+                                "type": "template",
+                                "template_name": selected_template,
+                                "generated": False
+                            }
+                        }
+                        # Add to generated prompts
+                        if 'generated_prompts' not in st.session_state:
+                            st.session_state.generated_prompts = []
+                        st.session_state.generated_prompts.append(template_prompt)
+                        st.success(f"Template '{selected_template}' added to prompts")
+                    else:
+                        st.warning("Please fill in all placeholder values")
+            
+            with batch_tab:
+                st.markdown("#### Batch Generation")
+                st.markdown("""
+                Generate a batch of prompts and completions in one go.
+                This is useful for creating a larger dataset for annotation.
+                """)
+                
+                # Batch generation options
+                batch_size = st.slider("Batch size", min_value=5, max_value=50, value=10)
+                
+                # Domain selection for specialized prompts
+                domain_options = ["AI Ethics", "Technical Concepts", "Creative Writing", "Data Science", "Mixed"]
+                selected_domains = st.multiselect(
+                    "Select domains",
+                    domain_options,
+                    default=["Mixed"]
+                )
+                
+                # Generate batch button
+                if st.button("Generate Batch", use_container_width=True):
+                    with st.spinner(f"Generating {batch_size} prompts and completions..."):
+                        # Generate prompts
+                        batch_prompts = generate_prompts(count=batch_size)
+                        
+                        # Add to session state
+                        if 'generated_prompts' not in st.session_state:
+                            st.session_state.generated_prompts = []
+                        st.session_state.generated_prompts.extend(batch_prompts)
+                        
+                        # For each prompt, generate completions in background
+                        for prompt in batch_prompts:
+                            completions = generate_completions(prompt['id'], prompt['text'], count=2)
+                            if 'generated_completions' not in st.session_state:
+                                st.session_state.generated_completions = {}
+                            st.session_state.generated_completions[prompt['id']] = completions
+                        
+                        st.success(f"Generated {len(batch_prompts)} prompts with completions")
+            
+            # Show generated prompts in a cleaner format
+            if 'generated_prompts' in st.session_state and st.session_state.generated_prompts:
+                with st.container():
+                    st.markdown("""
+                    <div style="border-radius: 10px; background-color: #e8f4f8; padding: 15px; margin-top: 20px;">
+                        <h4 style="color: #1E88E5;">📋 Available Prompts</h4>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Add a search box
+                    search_term = st.text_input("Search prompts", placeholder="Type to search...")
+                    
+                    # Filter prompts based on search term
+                    filtered_prompts = st.session_state.generated_prompts
+                    if search_term:
+                        filtered_prompts = [p for p in st.session_state.generated_prompts if search_term.lower() in p['text'].lower()]
+                        
+                    # Add a button to clear all prompts
+                    col1, col2 = st.columns([5, 1])
+                    with col2:
+                        if st.button("Clear All", use_container_width=True):
+                            st.session_state.generated_prompts = []
+                            if 'generated_completions' in st.session_state:
+                                st.session_state.generated_completions = {}
+                            st.rerun()
+                    
+                    with col1:
+                        st.markdown(f"**{len(filtered_prompts)}** prompts available")
+                    
+                    # Create a container with scrollable height
+                    prompt_container = st.container()
+                    with prompt_container:
+                        for i, prompt in enumerate(filtered_prompts):
+                            # Determine if completions exist for this prompt
+                            has_completions = 'generated_completions' in st.session_state and prompt['id'] in st.session_state.generated_completions
+                            
+                            # Show an indicator for prompts with completions
+                            completion_indicator = "✅ " if has_completions else "🔄 "
+                            
+                            with st.expander(f"{completion_indicator}Prompt {i+1}: {prompt['text'][:50]}...", expanded=False):
+                                st.markdown(f"**{prompt['text']}**")
+                                st.text(f"ID: {prompt['id']}")
+                                
+                                # Two columns for actions
+                                action_col1, action_col2 = st.columns(2)
+                                
+                                with action_col1:
+                                    # Button to generate completions for this prompt
+                                    if st.button(f"Generate Completions", key=f"gen_comp_{i}", use_container_width=True):
+                                        with st.spinner("Generating completions..."):
+                                            completions = generate_completions(prompt['id'], prompt['text'], count=2)
+                                            if 'generated_completions' not in st.session_state:
+                                                st.session_state.generated_completions = {}
+                                            st.session_state.generated_completions[prompt['id']] = completions
+                                            st.success(f"Generated {len(completions)} completions")
+                                            st.rerun()
+                                
+                                with action_col2:
+                                    # Button to remove this prompt
+                                    if st.button(f"Remove", key=f"remove_{i}", use_container_width=True):
+                                        # Remove from prompts
+                                        st.session_state.generated_prompts.remove(prompt)
+                                        # Remove completions if they exist
+                                        if 'generated_completions' in st.session_state and prompt['id'] in st.session_state.generated_completions:
+                                            del st.session_state.generated_completions[prompt['id']]
+                                        st.rerun()
+        
+        with ann_tab:
+            st.subheader("Annotate Completions")
+            
+            # Check if we have any prompt-completion pairs to annotate
+            if 'generated_completions' in st.session_state and st.session_state.generated_completions:
+                # Get a list of prompts with completions
+                prompts_with_completions = []
+                for prompt_id, completions in st.session_state.generated_completions.items():
+                    # Find the corresponding prompt
+                    prompt = next((p for p in st.session_state.generated_prompts if p['id'] == prompt_id), None)
+                    if prompt and len(completions) >= 2:
+                        prompts_with_completions.append(prompt)
+                
+                if prompts_with_completions:
+                    # Select which prompt to annotate with a more descriptive dropdown
+                    selected_prompt_index = st.selectbox(
+                        "Select a prompt to annotate",
+                        range(len(prompts_with_completions)),
+                        format_func=lambda i: f"Prompt {i+1}: {prompts_with_completions[i]['text'][:50]}..."
+                    )
+                    
+                    selected_prompt = prompts_with_completions[selected_prompt_index]
+                    completions = st.session_state.generated_completions[selected_prompt['id']]
+                    
+                    # Display the prompt in a highlighted box
+                    st.markdown("### Prompt")
+                    st.markdown(f"""<div style="padding: 10px; background-color: #f0f0f0; border-left: 5px solid #2e86de; margin-bottom: 20px;">
+                        {selected_prompt['text']}
+                    </div>""", unsafe_allow_html=True)
+                    
+                    # Display two completions side by side with clearer styling
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.markdown("### Completion A")
+                        st.markdown(f"""<div style="padding: 10px; background-color: #e3f2fd; border: 1px solid #90caf9; border-radius: 5px; height: 250px; overflow-y: auto;">
+                            {completions[0]['text']}
+                        </div>""", unsafe_allow_html=True)
+                    
+                    with col2:
+                        st.markdown("### Completion B")
+                        st.markdown(f"""<div style="padding: 10px; background-color: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 5px; height: 250px; overflow-y: auto;">
+                            {completions[1]['text']}
+                        </div>""", unsafe_allow_html=True)
+                    
+                    # Preference selection with more detailed feedback
+                    st.markdown("### Your Preference")
+                    preference = st.radio(
+                        "Which completion do you prefer?",
+                        ["Completion A", "Completion B", "Both equally good", "Neither is good"]
+                    )
+                    
+                    # Add reasoning/feedback field
+                    feedback_reason = st.text_area("Why did you choose this option? (Optional)", height=100)
+                    
+                    # Add detailed feedback with sliders
+                    st.markdown("### Detailed Quality Assessment")
+                    quality_metrics = {}
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.markdown("#### Completion A")
+                        quality_metrics["A_accuracy"] = st.slider("Factual Accuracy", 1, 10, 5, key="A_accuracy")
+                        quality_metrics["A_clarity"] = st.slider("Clarity", 1, 10, 5, key="A_clarity")
+                        quality_metrics["A_relevance"] = st.slider("Relevance", 1, 10, 5, key="A_relevance")
+                    
+                    with col2:
+                        st.markdown("#### Completion B")
+                        quality_metrics["B_accuracy"] = st.slider("Factual Accuracy", 1, 10, 5, key="B_accuracy")
+                        quality_metrics["B_clarity"] = st.slider("Clarity", 1, 10, 5, key="B_clarity")
+                        quality_metrics["B_relevance"] = st.slider("Relevance", 1, 10, 5, key="B_relevance")
+                    
+                    # Submit annotation
+                    if st.button("Submit Annotation", use_container_width=True):
+                        # Create annotation data with the enhanced feedback
+                        annotation_data = {
+                            "prompt_id": selected_prompt['id'],
+                            "prompt": selected_prompt['text'],
+                            "selected_completion": completions[0]['text'] if preference == "Completion A" else completions[1]['text'] if preference == "Completion B" else None,
+                            "rejected_completion": completions[1]['text'] if preference == "Completion A" else completions[0]['text'] if preference == "Completion B" else None,
+                            "preference": preference,
+                            "feedback": feedback_reason,
+                            "quality_metrics": quality_metrics,
+                            "is_model_vote": False  # This is a human vote
+                        }
+                        
+                        # Save annotation
+                        with st.spinner("Saving annotation..."):
+                            if save_annotation(annotation_data):
+                                st.success("✅ Annotation saved successfully!")
+                                
+                                # Display a summary of the annotation
+                                st.markdown("### Annotation Summary")
+                                st.markdown(f"**Preference:** {preference}")
+                                if feedback_reason:
+                                    st.markdown(f"**Feedback:** {feedback_reason}")
+                                
+                                # Remove this prompt from the list to avoid duplicate annotations
+                                del st.session_state.generated_completions[selected_prompt['id']]
+                                
+                                # Button to annotate another prompt
+                                if st.button("Annotate Another Prompt", use_container_width=True):
+                                    st.rerun()
+                            else:
+                                st.error("❌ Error saving annotation")
+                else:
+                    st.info("No prompt-completion pairs available for annotation. Generate completions for a prompt first.")
+            else:
+                st.info("No completions available. Generate prompts and completions first in the 'Generate Content' tab.")
+        
+        with history_tab:
+            st.subheader("Your Annotation History")
+            
+            # Create a visually appealing container
+            with st.container():
+                st.markdown("""
+                <div style="border-radius: 10px; background-color: #f8f9fa; padding: 15px; margin-bottom: 20px;">
+                    <h4 style="color: #1E88E5;">📊 Annotation Analytics</h4>
+                    <p>View your annotation history, stats, and patterns to track your contribution to the RLHF system.</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # Load vote logs
+            vote_logs_dir = Path(project_root) / "data" / "vote_logs"
+            vote_logs = []
+            
+            if vote_logs_dir.exists():
+                for log_file in vote_logs_dir.glob("*.json"):
+                    try:
+                        with open(log_file, "r") as f:
+                            vote_logs.append(json.load(f))
+                    except Exception as e:
+                        logger.warning(f"Error loading vote log file {log_file}: {e}")
+            
+            # Filter to only show human annotations
+            human_votes = [log for log in vote_logs if not log.get('is_model_vote', True)]
+            
+            if human_votes:
+                # Convert to DataFrame for easier display
+                vote_df = pd.DataFrame(human_votes)
+                
+                # Ensure timestamp is datetime
+                if 'timestamp' in vote_df.columns:
+                    vote_df['timestamp'] = pd.to_datetime(vote_df['timestamp'])
+                    vote_df = vote_df.sort_values('timestamp', ascending=False)
+                
+                # Create tabs for different views
+                stats_tab, timeline_tab, details_tab, export_tab = st.tabs(["Stats", "Timeline", "Annotation Details", "Export/Import"])
+                
+                with stats_tab:
+                    # Display session stats with improved visuals
+                    st.markdown("### Your Annotation Stats")
+                    
+                    # Create a metrics dashboard
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        total_annotations = len(human_votes)
+                        st.metric("Total Annotations", f"{total_annotations}", delta=None)
+                        
+                        # Add icon and styling
+                        st.markdown(f"""
+                        <div style='text-align: center'>
+                            <span style='font-size: 2.5rem; color: #1E88E5;'>📝</span>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col2:
+                        # Count preference distribution
+                        if 'preference' in vote_df.columns:
+                            preference_counts = vote_df['preference'].value_counts()
+                            most_common = preference_counts.index[0] if not preference_counts.empty else "N/A"
+                            most_common_count = preference_counts.iloc[0] if not preference_counts.empty else 0
+                            most_common_percent = (most_common_count / total_annotations * 100) if total_annotations > 0 else 0
+                            
+                            st.metric("Most Common Choice", f"{most_common}", 
+                                     delta=f"{most_common_percent:.1f}%" if most_common_percent > 0 else None)
+                            
+                            # Add icon and styling
+                            st.markdown(f"""
+                            <div style='text-align: center'>
+                                <span style='font-size: 2.5rem; color: #FF9800;'>🏆</span>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    
+                    with col3:
+                        # Show today's count
+                        if 'timestamp' in vote_df.columns:
+                            today = pd.Timestamp.now().date()
+                            today_count = len(vote_df[vote_df['timestamp'].dt.date == today])
+                            yesterday = today - pd.Timedelta(days=1)
+                            yesterday_count = len(vote_df[vote_df['timestamp'].dt.date == yesterday])
+                            
+                            # Calculate delta
+                            delta = today_count - yesterday_count if yesterday_count > 0 else None
+                            
+                            st.metric("Today's Annotations", f"{today_count}", delta=delta)
+                            
+                            # Add icon and styling
+                            st.markdown(f"""
+                            <div style='text-align: center'>
+                                <span style='font-size: 2.5rem; color: #4CAF50;'>📅</span>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    
+                    # Add preference distribution visualization
+                    st.markdown("### Preference Distribution")
+                    
+                    if 'preference' in vote_df.columns:
+                        # Create a pie chart for preference distribution
+                        preference_counts = vote_df['preference'].value_counts().reset_index()
+                        preference_counts.columns = ['preference', 'count']
+                        
+                        fig = go.Figure(data=[go.Pie(
+                            labels=preference_counts['preference'],
+                            values=preference_counts['count'],
+                            hole=.4,
+                            marker_colors=px.colors.qualitative.Safe
+                        )])
+                        
+                        fig.update_layout(
+                            title="Preference Distribution",
+                            showlegend=True,
+                            margin=dict(t=30, b=0, l=0, r=0)
+                        )
+                        
+                        st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Add quality metrics visualization if available
+                    if 'quality_metrics' in vote_df.columns:
+                        st.markdown("### Quality Metrics")
+                        
+                        # Extract and average quality metrics
+                        quality_data = []
+                        
+                        for _, row in vote_df.iterrows():
+                            if isinstance(row.get('quality_metrics'), dict):
+                                quality_data.append(row['quality_metrics'])
+                        
+                        if quality_data:
+                            # Convert list of dicts to DataFrame
+                            quality_df = pd.DataFrame(quality_data)
+                            
+                            # Calculate averages
+                            avg_metrics = {
+                                'Accuracy A': quality_df['A_accuracy'].mean() if 'A_accuracy' in quality_df else 0,
+                                'Clarity A': quality_df['A_clarity'].mean() if 'A_clarity' in quality_df else 0,
+                                'Relevance A': quality_df['A_relevance'].mean() if 'A_relevance' in quality_df else 0,
+                                'Accuracy B': quality_df['B_accuracy'].mean() if 'B_accuracy' in quality_df else 0,
+                                'Clarity B': quality_df['B_clarity'].mean() if 'B_clarity' in quality_df else 0,
+                                'Relevance B': quality_df['B_relevance'].mean() if 'B_relevance' in quality_df else 0
+                            }
+                            
+                            # Create a radar chart
+                            categories = list(avg_metrics.keys())
+                            values = list(avg_metrics.values())
+                            
+                            fig = go.Figure()
+                            
+                            fig.add_trace(go.Scatterpolar(
+                                r=values,
+                                theta=categories,
+                                fill='toself',
+                                name='Average Quality Ratings',
+                                line_color='#1E88E5'
+                            ))
+                            
+                            fig.update_layout(
+                                polar=dict(
+                                    radialaxis=dict(
+                                        visible=True,
+                                        range=[0, 10]
+                                    )
+                                ),
+                                showlegend=False
+                            )
+                            
+                            st.plotly_chart(fig, use_container_width=True)
+                
+                with timeline_tab:
+                    st.markdown("### Annotation Timeline")
+                    
+                    if 'timestamp' in vote_df.columns:
+                        # Group by day and count annotations
+                        vote_df['date'] = vote_df['timestamp'].dt.date
+                        daily_counts = vote_df.groupby('date')['preference'].count().reset_index()
+                        daily_counts.columns = ['date', 'count']
+                        
+                        # Create a bar chart
+                        fig = px.bar(
+                            daily_counts, 
+                            x='date', 
+                            y='count',
+                            title="Daily Annotation Activity",
+                            labels={'date': 'Date', 'count': 'Number of Annotations'},
+                            color='count',
+                            color_continuous_scale='Blues'
+                        )
+                        
+                        fig.update_layout(
+                            xaxis_title="Date",
+                            yaxis_title="Annotations",
+                            coloraxis_showscale=False
+                        )
+                        
+                        st.plotly_chart(fig, use_container_width=True)
+                        
+                        # Show weekly trend
+                        st.markdown("### Weekly Annotation Trend")
+                        
+                        vote_df['weekday'] = vote_df['timestamp'].dt.day_name()
+                        weekday_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+                        weekday_counts = vote_df.groupby('weekday')['preference'].count().reindex(weekday_order).reset_index()
+                        weekday_counts.columns = ['weekday', 'count']
+                        
+                        fig = px.line(
+                            weekday_counts,
+                            x='weekday',
+                            y='count',
+                            markers=True,
+                            title="Annotations by Day of Week",
+                            labels={'weekday': 'Day', 'count': 'Number of Annotations'}
+                        )
+                        
+                        fig.update_layout(
+                            xaxis_title="Day of Week",
+                            yaxis_title="Annotations"
+                        )
+                        
+                        st.plotly_chart(fig, use_container_width=True)
+                
+                with details_tab:
+                    st.markdown("### Recent Annotations")
+                    
+                    # Add a search box
+                    search_term = st.text_input("Search annotations", placeholder="Search by prompt or feedback...")
+                    
+                    # Filter annotations based on search term
+                    filtered_votes = human_votes
+                    if search_term:
+                        filtered_votes = [v for v in human_votes if 
+                                         (search_term.lower() in v.get('prompt', '').lower()) or 
+                                         (search_term.lower() in v.get('feedback', '').lower())]
+                    
+                    # Create a clean display of the annotation history
+                    for i, vote in enumerate(filtered_votes[:10]):  # Show 10 most recent or filtered
+                        timestamp = pd.to_datetime(vote.get('timestamp', 'Unknown time')).strftime('%Y-%m-%d %H:%M:%S') \
+                                   if 'timestamp' in vote else 'Unknown time'
+                        
+                        with st.expander(f"Annotation {i+1} - {timestamp}", expanded=False):
+                            st.markdown("**Prompt:**")
+                            st.markdown(f"<div style='padding: 10px; background-color: #f0f0f0; border-left: 5px solid #2e86de;'>{vote.get('prompt', 'N/A')}</div>", unsafe_allow_html=True)
+                            
+                            if vote.get('preference', '') == 'Completion A':
+                                st.markdown("**Selected:** Completion A")
+                                st.markdown(f"<div style='padding: 10px; background-color: #e3f2fd; border: 1px solid #90caf9;'>{vote.get('selected_completion', 'N/A')}</div>", unsafe_allow_html=True)
+                                st.markdown("**Rejected:** Completion B")
+                                st.markdown(f"<div style='padding: 10px; background-color: #ffebee; border: 1px solid #ffcdd2;'>{vote.get('rejected_completion', 'N/A')}</div>", unsafe_allow_html=True)
+                            elif vote.get('preference', '') == 'Completion B':
+                                st.markdown("**Selected:** Completion B")
+                                st.markdown(f"<div style='padding: 10px; background-color: #e3f2fd; border: 1px solid #90caf9;'>{vote.get('selected_completion', 'N/A')}</div>", unsafe_allow_html=True)
+                                st.markdown("**Rejected:** Completion A") 
+                                st.markdown(f"<div style='padding: 10px; background-color: #ffebee; border: 1px solid #ffcdd2;'>{vote.get('rejected_completion', 'N/A')}</div>", unsafe_allow_html=True)
+                            else:
+                                st.markdown(f"**Preference:** {vote.get('preference', 'N/A')}")
+                            
+                            # Show feedback if available
+                            if 'feedback' in vote and vote['feedback']:
+                                st.markdown("**Feedback:**")
+                                st.markdown(f"<div style='padding: 10px; background-color: #fff8e1; border: 1px solid #ffe082;'>{vote['feedback']}</div>", unsafe_allow_html=True)
+                            
+                            # Show quality metrics if available
+                            if 'quality_metrics' in vote and vote['quality_metrics']:
+                                st.markdown("**Quality Metrics:**")
+                                
+                                metrics = vote['quality_metrics']
+                                metrics_col1, metrics_col2 = st.columns(2)
+                                
+                                with metrics_col1:
+                                    st.markdown("**Completion A:**")
+                                    if 'A_accuracy' in metrics:
+                                        st.markdown(f"- Accuracy: {metrics['A_accuracy']}/10")
+                                    if 'A_clarity' in metrics:
+                                        st.markdown(f"- Clarity: {metrics['A_clarity']}/10")
+                                    if 'A_relevance' in metrics:
+                                        st.markdown(f"- Relevance: {metrics['A_relevance']}/10")
+                                
+                                with metrics_col2:
+                                    st.markdown("**Completion B:**")
+                                    if 'B_accuracy' in metrics:
+                                        st.markdown(f"- Accuracy: {metrics['B_accuracy']}/10")
+                                    if 'B_clarity' in metrics:
+                                        st.markdown(f"- Clarity: {metrics['B_clarity']}/10")
+                                    if 'B_relevance' in metrics:
+                                        st.markdown(f"- Relevance: {metrics['B_relevance']}/10")
+                
+                with export_tab:
+                    st.markdown("### Export and Import Annotations")
+                    
+                    # Export options
+                    st.markdown("#### Export Options")
+                    
+                    # Create columns for different export formats
+                    export_col1, export_col2, export_col3 = st.columns(3)
+                    
+                    with export_col1:
+                        # CSV export
+                        if not vote_df.empty:
+                            csv = vote_df.to_csv(index=False)
+                            st.download_button(
+                                label="Download as CSV",
+                                data=csv,
+                                file_name="rlhf_annotations.csv",
+                                mime="text/csv",
+                                use_container_width=True
+                            )
+                    
+                    with export_col2:
+                        # JSON export
+                        if human_votes:
+                            json_data = json.dumps(human_votes, indent=2)
+                            st.download_button(
+                                label="Download as JSON",
+                                data=json_data,
+                                file_name="rlhf_annotations.json",
+                                mime="application/json",
+                                use_container_width=True
+                            )
+                    
+                    with export_col3:
+                        # JSONL export (one annotation per line)
+                        if human_votes:
+                            jsonl_data = '\n'.join(json.dumps(vote) for vote in human_votes)
+                            st.download_button(
+                                label="Download as JSONL",
+                                data=jsonl_data,
+                                file_name="rlhf_annotations.jsonl",
+                                mime="application/json",
+                                use_container_width=True
+                            )
+                    
+                    # Import options
+                    st.markdown("#### Import Annotations")
+                    st.markdown("""
+                    Import annotations from a JSON or JSONL file. This will add the imported annotations to your existing ones.
+                    """)
+                    
+                    imported_file = st.file_uploader("Choose a file to import", type=["json", "jsonl", "csv"])
+                    
+                    if imported_file is not None:
+                        try:
+                            # Determine file type and parse accordingly
+                            file_type = imported_file.name.split('.')[-1].lower()
+                            
+                            if file_type == 'csv':
+                                # Parse CSV
+                                import_df = pd.read_csv(imported_file)
+                                imported_data = import_df.to_dict('records')
+                            elif file_type == 'json':
+                                # Parse JSON
+                                imported_data = json.loads(imported_file.getvalue())
+                            elif file_type == 'jsonl':
+                                # Parse JSONL
+                                imported_data = [json.loads(line) for line in imported_file.getvalue().decode('utf-8').splitlines() if line.strip()]
+                            
+                            # Validate imported data
+                            valid_annotations = []
+                            for item in imported_data:
+                                # Ensure it has necessary fields
+                                if 'prompt' in item and ('preference' in item or 'choice' in item):
+                                    # Add a timestamp if missing
+                                    if 'timestamp' not in item:
+                                        item['timestamp'] = datetime.now().isoformat()
+                                    # Set is_model_vote to False for imported annotations
+                                    item['is_model_vote'] = False
+                                    valid_annotations.append(item)
+                            
+                            if valid_annotations:
+                                # Save each annotation to vote logs
+                                success_count = 0
+                                for annotation in valid_annotations:
+                                    # Generate a unique filename
+                                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                                    filename = f"vote_{timestamp}_{uuid.uuid4().hex[:8]}.json"
+                                    
+                                    # Save to file
+                                    with open(vote_logs_dir / filename, "w") as f:
+                                        json.dump(annotation, f, indent=2)
+                                    success_count += 1
+                                
+                                st.success(f"Successfully imported {success_count} annotations.")
+                                st.info("Reload the page to see your imported annotations.")
+                                
+                                # Add a button to reload
+                                if st.button("Reload Now", use_container_width=True):
+                                    st.rerun()
+                            else:
+                                st.warning("No valid annotations found in the imported file.")
+                        
+                        except Exception as e:
+                            st.error(f"Error importing annotations: {e}")
+            else:
+                st.info("No annotation history found. Start annotating to build your history.")
+                
+                # Add an example of what annotations look like
+                st.markdown("""
+                ### Sample Annotation
+                Here's what your annotations will look like once you start creating them:
+                """)
+                
+                # Create a sample annotation
+                sample_annotation = {
+                    "prompt": "Explain the concept of reinforcement learning in simple terms.",
+                    "selected_completion": "Reinforcement learning is like training a dog: you reward good behaviors to encourage them and discourage bad ones. The system learns by trying different actions, seeing which ones earn rewards, and adjusting its behavior to get more rewards in the future.",
+                    "rejected_completion": "Reinforcement learning is a machine learning paradigm where algorithms learn optimal actions through trial and error interactions with an environment, guided by a reward signal that indicates the quality of the actions taken.",
+                    "preference": "Completion A",
+                    "feedback": "The first explanation uses a familiar analogy and simple language that anyone can understand.",
+                    "timestamp": datetime.now().isoformat()
+                }
+                
+                # Display the sample
+                st.markdown("**Prompt:**")
+                st.markdown(f"<div style='padding: 10px; background-color: #f0f0f0; border-left: 5px solid #2e86de;'>{sample_annotation['prompt']}</div>", unsafe_allow_html=True)
+                
+                st.markdown("**Selected:** Completion A")
+                st.markdown(f"<div style='padding: 10px; background-color: #e3f2fd; border: 1px solid #90caf9;'>{sample_annotation['selected_completion']}</div>", unsafe_allow_html=True)
+                
+                st.markdown("**Rejected:** Completion B")
+                st.markdown(f"<div style='padding: 10px; background-color: #ffebee; border: 1px solid #ffcdd2;'>{sample_annotation['rejected_completion']}</div>", unsafe_allow_html=True)
+                
+                st.markdown("**Feedback:**")
+                st.markdown(f"<div style='padding: 10px; background-color: #fff8e1; border: 1px solid #ffe082;'>{sample_annotation['feedback']}</div>", unsafe_allow_html=True)
+    
+    # Tab 7: Chat Interface
+    with tab7:
+        st.header("Chat Interface")
+        
+        # Create a visually appealing header
+        st.markdown("""
+        <div style="border-radius: 10px; background-color: #f0f7ff; padding: 15px; margin-bottom: 20px;">
+            <h4 style="color: #1E88E5;">💬 RLHF Assistant</h4>
+            <p>Chat with the RLHF assistant to learn about concepts, analyze your data, and get insights about your model.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Create a sidebar-like structure with tabs
+        chat_col1, chat_col2 = st.columns([2, 5])
+        
+        with chat_col1:
+            st.markdown("### Quick Topics")
+            
+            # Create collapsible sections for different topic categories
+            with st.expander("RLHF Basics", expanded=True):
+                basic_topics = {
+                    "rlhf_basics": "What is RLHF?",
+                    "process_overview": "RLHF process overview",
+                    "training_data": "Training data for RLHF",
+                    "reward_models": "Reward models explained"
+                }
+                
+                for key, topic in basic_topics.items():
+                    if st.button(topic, key=key, use_container_width=True):
+                        if "chat_history" not in st.session_state:
+                            st.session_state.chat_history = []
+                        
+                        # Add to chat history
+                        st.session_state.chat_history.append({"role": "user", "content": topic})
+                        st.rerun()
+            
+            with st.expander("Alignment & Calibration", expanded=False):
+                alignment_topics = {
+                    "btn_alignment": "Alignment metrics explained",
+                    "btn_calibration": "What is calibration?",
+                    "btn_ece": "Expected Calibration Error (ECE)",
+                    "btn_confidence": "Confidence analysis"
+                }
+                
+                for key, topic in alignment_topics.items():
+                    if st.button(topic, key=key, use_container_width=True):
+                        if "chat_history" not in st.session_state:
+                            st.session_state.chat_history = []
+                        
+                        # Add to chat history
+                        st.session_state.chat_history.append({"role": "user", "content": topic})
+                        st.rerun()
+            
+            with st.expander("Drift & Model Evolution", expanded=False):
+                drift_topics = {
+                    "btn_drift": "Drift clusters explained",
+                    "btn_evolution": "Model evolution over time",
+                    "btn_preference": "Preference analysis",
+                    "btn_improve": "Model improvement tips"
+                }
+                
+                for key, topic in drift_topics.items():
+                    if st.button(topic, key=key, use_container_width=True):
+                        if "chat_history" not in st.session_state:
+                            st.session_state.chat_history = []
+                        
+                        # Add to chat history
+                        st.session_state.chat_history.append({"role": "user", "content": topic})
+                        st.rerun()
+            
+            # Add system prompt and configuration settings
+            with st.expander("Chat Settings", expanded=False):
+                system_prompt = st.text_area(
+                    "System Prompt", 
+                    value="""You are an AI assistant integrated into the RLHF Attunement Dashboard. You can answer questions about the dashboard, the RLHF process, and provide insights about AI alignment and preferences. Be concise, helpful, and informative.""",
+                    height=100
+                )
+                
+                temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.7, step=0.1)
+                
+                # Add a button to clear chat history
+                if st.button("Clear Chat History", use_container_width=True):
+                    st.session_state.chat_history = []
+                    st.rerun()
+                
+                # Add export/import chat history feature
+                st.markdown("#### Export/Import Chat")
+                
+                if "chat_history" in st.session_state and st.session_state.chat_history:
+                    # Export chat history
+                    st.subheader("Export Chat")
+                    
+                    # Convert chat history to a formatted string for different formats
+                    chat_text = ""
+                    chat_json = json.dumps(st.session_state.chat_history, indent=2)
+                    
+                    for msg in st.session_state.chat_history:
+                        role = "User" if msg["role"] == "user" else "Assistant"
+                        chat_text += f"{role}: {msg['content']}\n\n"
+                    
+                    # Create a downloadable file
+                    current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.download_button(
+                            label="Download as Text",
+                            data=chat_text,
+                            file_name=f"rlhf_chat_export_{current_time}.txt",
+                            mime="text/plain",
+                            use_container_width=True
+                        )
+                    
+                    with col2:
+                        st.download_button(
+                            label="Download as JSON",
+                            data=chat_json,
+                            file_name=f"rlhf_chat_export_{current_time}.json",
+                            mime="application/json",
+                            use_container_width=True
+                        )
+                
+                # Import chat history
+                st.subheader("Import Chat")
+                chat_file = st.file_uploader("Upload chat history", type=["json", "txt"])
+                
+                if chat_file is not None:
+                    try:
+                        if chat_file.name.endswith(".json"):
+                            # Parse JSON file
+                            imported_chat = json.loads(chat_file.getvalue())
+                            
+                            # Validate structure
+                            valid_chat = []
+                            for msg in imported_chat:
+                                if isinstance(msg, dict) and "role" in msg and "content" in msg:
+                                    if msg["role"] in ["user", "assistant"]:
+                                        valid_chat.append(msg)
+                            
+                            if valid_chat:
+                                st.session_state.chat_history = valid_chat
+                                st.success(f"Successfully imported {len(valid_chat)} messages.")
+                                st.rerun()
+                            else:
+                                st.error("No valid chat messages found in the file.")
+                        
+                        elif chat_file.name.endswith(".txt"):
+                            st.warning("Text format import not yet supported. Please use JSON format.")
+                    
+                    except Exception as e:
+                        st.error(f"Error importing chat history: {e}")
+        
+        with chat_col2:
+            # Create a chat message container with custom styling
+            chat_container = st.container()
+            
+            with chat_container:
+                # Add header with toggle for dark mode
+                row1_col1, row1_col2 = st.columns([6, 1])
+                
+                with row1_col1:
+                    st.markdown("### Conversation")
+                
+                with row1_col2:
+                    # Add a dark/light mode toggle
+                    if "dark_mode" not in st.session_state:
+                        st.session_state.dark_mode = False
+                    
+                    if st.toggle("🌙", value=st.session_state.dark_mode, key="dark_mode_toggle"):
+                        st.session_state.dark_mode = True
+                    else:
+                        st.session_state.dark_mode = False
+                
+                # Initialize chat history in session state if not exists
+                if "chat_history" not in st.session_state:
+                    st.session_state.chat_history = []
+                
+                # Determine chat container style based on mode
+                chat_bg_color = "#1E1E1E" if st.session_state.dark_mode else "#F7F7F7"
+                user_bg_color = "#2D333B" if st.session_state.dark_mode else "#E3F2FD"
+                user_border = "#444C56" if st.session_state.dark_mode else "#90CAF9"
+                user_text_color = "#E6EDF3" if st.session_state.dark_mode else "#000000"
+                
+                assistant_bg_color = "#22272E" if st.session_state.dark_mode else "#F1F8E9"
+                assistant_border = "#444C56" if st.session_state.dark_mode else "#C5E1A5"
+                assistant_text_color = "#E6EDF3" if st.session_state.dark_mode else "#000000"
+                
+                # Display chat container with custom styling
+                st.markdown(f"""
+                <div style="border-radius: 10px; background-color: {chat_bg_color}; padding: 15px; margin-bottom: 20px; height: 400px; overflow-y: auto;">
+                """, unsafe_allow_html=True)
+                
+                # Display chat history with custom styling
+                message_placeholder = st.empty()
+                
+                chat_html = ""
+                for msg in st.session_state.chat_history:
+                    if msg["role"] == "user":
+                        chat_html += f"""
+                        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                            <div style="max-width: 80%; background-color: {user_bg_color}; border: 1px solid {user_border}; padding: 10px; border-radius: 10px 10px 0 10px;">
+                                <div style="font-weight: bold; color: {user_text_color}; margin-bottom: 5px;">You</div>
+                                <div style="color: {user_text_color};">{msg["content"]}</div>
+                            </div>
+                        </div>
+                        """
+                    else:
+                        chat_html += f"""
+                        <div style="display: flex; justify-content: flex-start; margin-bottom: 10px;">
+                            <div style="max-width: 80%; background-color: {assistant_bg_color}; border: 1px solid {assistant_border}; padding: 10px; border-radius: 10px 10px 10px 0;">
+                                <div style="font-weight: bold; color: {assistant_text_color}; margin-bottom: 5px;">RLHF Assistant</div>
+                                <div style="color: {assistant_text_color};">{msg["content"]}</div>
+                            </div>
+                        </div>
+                        """
+                
+                message_placeholder.markdown(chat_html, unsafe_allow_html=True)
+                
+                # Close the chat container div
+                st.markdown("</div>", unsafe_allow_html=True)
+                
+                # Chat input area with custom styling
+                user_input = st.chat_input("Ask about RLHF concepts, metrics, or dashboard features...")
+                
+                if user_input:
+                    # Add user message to chat history
+                    st.session_state.chat_history.append({"role": "user", "content": user_input})
+                    
+                    # Generate assistant response using DeepSeek
+                    with st.spinner("Thinking..."):
+                        response = get_deepseek_response(
+                            st.session_state.chat_history[-5:],  # Use last 5 messages for context
+                            system_prompt=system_prompt,
+                            temperature=temperature
+                        )
+                    
+                    # Add assistant response to chat history
+                    st.session_state.chat_history.append({"role": "assistant", "content": response})
+                    
+                    # Rerun to update the UI
+                    st.rerun()
+                
+                # Check if any topic buttons were clicked
+                for key in list(basic_topics.keys()) + list(alignment_topics.keys()) + list(drift_topics.keys()):
+                    if key in st.session_state and st.session_state[key]:
+                        # Find the topic text
+                        topic_text = None
+                        for topics_dict in [basic_topics, alignment_topics, drift_topics]:
+                            if key in topics_dict:
+                                topic_text = topics_dict[key]
+                                break
+                        
+                        if topic_text and len(st.session_state.chat_history) > 0 and st.session_state.chat_history[-1]["content"] == topic_text:
+                            # Generate assistant response using DeepSeek
+                            with st.spinner("Thinking..."):
+                                response = get_deepseek_response(
+                                    st.session_state.chat_history[-5:],  # Use last 5 messages for context
+                                    system_prompt=system_prompt,
+                                    temperature=temperature
+                                )
+                            
+                            # Add assistant response to chat history
+                            st.session_state.chat_history.append({"role": "assistant", "content": response})
+                            
+                            # Reset button state to avoid repeated processing
+                            st.session_state[key] = False
+                            
+                            # Rerun to update the UI
+                            st.rerun()
+
+if __name__ == "__main__":
+    main()

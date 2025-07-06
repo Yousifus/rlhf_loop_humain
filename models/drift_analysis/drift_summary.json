@@ -1,0 +1,48 @@
+{
+  "timestamp": "2025-05-21T18:40:00.000000",
+  "summary": {
+    "total_examples": 1200,
+    "num_clusters": 3,
+    "time_drift_detected": true,
+    "accuracy_drift": 0.08,
+    "confidence_drift": 0.12
+  },
+  "clusters": [
+    {
+      "cluster_id": "cluster_1",
+      "description": "Theoretical comparison questions",
+      "example_count": 245,
+      "accuracy": 0.67,
+      "avg_confidence": 0.83,
+      "error_types": {
+        "overconfidence": 112,
+        "underconfidence": 24,
+        "misalignment": 68
+      }
+    },
+    {
+      "cluster_id": "cluster_2",
+      "description": "Implementation detail questions",
+      "example_count": 328,
+      "accuracy": 0.81,
+      "avg_confidence": 0.78,
+      "error_types": {
+        "overconfidence": 42,
+        "underconfidence": 85,
+        "misalignment": 26
+      }
+    },
+    {
+      "cluster_id": "cluster_3",
+      "description": "Ethical consideration questions",
+      "example_count": 156,
+      "accuracy": 0.74,
+      "avg_confidence": 0.76,
+      "error_types": {
+        "overconfidence": 35,
+        "underconfidence": 29,
+        "misalignment": 18
+      }
+    }
+  ]
+} 

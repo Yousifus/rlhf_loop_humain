@@ -1,0 +1,10 @@
+[
+  {
+    "id": "prompt_001_completion_1",
+    "text": "Reinforcement learning from human feedback is like teaching a dog new tricks with treats. Imagine you have an AI that's trying to do a task. When it does something good, humans give it positive feedback (like a treat), and when it does something bad, humans give it negative feedback. Over time, the AI learns which actions lead to positive feedback and starts doing those more often. This way, the AI aligns its behavior with what humans want, improving through direct human guidance rather than just from pre-programmed rules."
+  },
+  {
+    "id": "prompt_001_completion_2",
+    "text": "Reinforcement Learning from Human Feedback (RLHF) is a method where AI systems improve by learning directly from human evaluations. It works in three steps: First, the AI generates multiple responses to a given input. Second, human evaluators rank these responses based on quality and helpfulness. Third, these human preferences are used to train a reward model that scores outputs. The AI then optimizes its behavior to maximize this reward function through reinforcement learning, gradually aligning its outputs with human preferences and values."
+  }
+] 

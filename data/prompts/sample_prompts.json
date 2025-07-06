@@ -1,0 +1,22 @@
+[
+  {
+    "id": "prompt_001",
+    "text": "Explain the concept of reinforcement learning from human feedback in simple terms."
+  },
+  {
+    "id": "prompt_002",
+    "text": "Write a short poem about artificial intelligence and its relationship with humanity."
+  },
+  {
+    "id": "prompt_003",
+    "text": "What are the ethical considerations of using large language models in healthcare?"
+  },
+  {
+    "id": "prompt_004",
+    "text": "Describe how you would implement a recommendation system for an e-commerce website."
+  },
+  {
+    "id": "prompt_005",
+    "text": "Compare and contrast supervised learning and unsupervised learning approaches."
+  }
+] 

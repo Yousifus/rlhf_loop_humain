@@ -1,0 +1,705 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Setup Project Repository",
+      "description": "Create a new project repository and initialize it with the necessary structure for the Symbolic RLHF Loop project.",
+      "details": "",
+      "testStrategy": "",
+      "priority": "medium",
+      "dependencies": [],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create a New Repository",
+          "description": "Create a new GitHub repository for the Symbolic RLHF Loop project with a clear and descriptive name.",
+          "dependencies": [],
+          "details": "Use GitHub's web interface or CLI to create the repository. Ensure the name is clear and follows a standard naming convention.",
+          "status": "pending",
+          "testStrategy": "Verify repository creation and name consistency"
+        },
+        {
+          "id": 2,
+          "title": "Initialize Repository Structure",
+          "description": "Set up the basic structure of the repository, including folders for source code, documentation, tests, and datasets.",
+          "dependencies": [
+            1
+          ],
+          "details": "Create folders for different types of files and ensure consistent naming conventions across them.",
+          "status": "pending",
+          "testStrategy": "Check folder structure and naming consistency"
+        },
+        {
+          "id": 3,
+          "title": "Create README and Documentation Files",
+          "description": "Create a README file to provide an overview of the project and add any necessary documentation files.",
+          "dependencies": [
+            2
+          ],
+          "details": "Include information about the project's purpose, setup instructions, and any relevant details for contributors.",
+          "status": "pending",
+          "testStrategy": "Review README for clarity and completeness"
+        },
+        {
+          "id": 4,
+          "title": "Configure Branch Protection Rules",
+          "description": "Set up branch protection rules to prevent direct commits to the main branch and require pull request reviews.",
+          "dependencies": [
+            1
+          ],
+          "details": "Use GitHub's branch protection feature to ensure code quality and collaboration standards.",
+          "status": "pending",
+          "testStrategy": "Test branch protection by attempting a direct commit"
+        },
+        {
+          "id": 5,
+          "title": "Implement Git Large File Storage (LFS) if Necessary",
+          "description": "If the project includes large files, configure Git LFS to optimize repository performance.",
+          "dependencies": [
+            1
+          ],
+          "details": "Use Git LFS for large files like datasets or media to avoid performance issues.",
+          "status": "pending",
+          "testStrategy": "Verify that large files are properly tracked and do not affect performance"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Implement Prompt Generation Logic",
+      "description": "Develop a module to generate diverse prompts across various domains for testing.",
+      "details": "",
+      "testStrategy": "",
+      "priority": "medium",
+      "dependencies": [],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 3,
+      "title": "Integrate DeepSeek API for Completion Generation",
+      "description": "Use the DeepSeek API to generate model completions based on the generated prompts.",
+      "details": "",
+      "testStrategy": "",
+      "priority": "medium",
+      "dependencies": [],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 4,
+      "title": "Design Human Voting Interface",
+      "description": "Create an intuitive interface for human annotators to vote on model completions.",
+      "details": "",
+      "testStrategy": "",
+      "priority": "medium",
+      "dependencies": [],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 5,
+      "title": "Implement Vote Logging and Structured Data Storage",
+      "description": "Store votes in a structured format for analysis.",
+      "details": "",
+      "testStrategy": "",
+      "priority": "medium",
+      "dependencies": [],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 6,
+      "title": "Train Preference Model Using DistilBERT",
+      "description": "Train a preference model using DistilBERT to learn from human preferences.",
+      "details": "",
+      "testStrategy": "",
+      "priority": "medium",
+      "dependencies": [],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 7,
+      "title": "Develop Dashboard with Visualization Tabs",
+      "description": "Create a comprehensive dashboard with multiple visualization tabs as specified in the PRD.",
+      "details": "",
+      "testStrategy": "",
+      "priority": "medium",
+      "dependencies": [],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Define Dashboard Requirements and Visualization Scope",
+          "description": "Gather and analyze the Product Requirements Document (PRD) to identify the specific visualization tabs and key performance indicators (KPIs) that need to be included in the dashboard.",
+          "dependencies": [],
+          "details": "Review the PRD thoroughly to extract all necessary details about the dashboard's purpose, target audience, required data sources, and the types of visualizations needed for each tab. Document these requirements clearly to guide the design and development process.",
+          "status": "pending",
+          "testStrategy": "Verify completeness and clarity of requirements with stakeholders before proceeding."
+        },
+        {
+          "id": 2,
+          "title": "Design Dashboard Layout and Visual Hierarchy",
+          "description": "Create a detailed design of the dashboard layout, focusing on establishing a clear visual hierarchy and logical grouping of visualization tabs as per best practices.",
+          "dependencies": [
+            1
+          ],
+          "details": "Use principles such as placing critical data at the top or left, grouping related data, applying consistent typography and color schemes, and limiting the number of views per tab to enhance usability and clarity. Prepare wireframes or mockups for stakeholder review.",
+          "status": "pending",
+          "testStrategy": "Conduct design reviews and usability testing with sample users to ensure the layout is intuitive and meets user needs."
+        },
+        {
+          "id": 3,
+          "title": "Develop Core Dashboard Framework and Navigation",
+          "description": "Implement the foundational dashboard structure including tab navigation and responsive layout to support multiple visualization tabs.",
+          "dependencies": [
+            2
+          ],
+          "details": "Set up the dashboard framework using the chosen technology stack, ensuring smooth tab switching, consistent styling, and accessibility compliance. Implement navigation controls that allow users to easily switch between visualization tabs.",
+          "status": "pending",
+          "testStrategy": "Perform functional testing on navigation and layout responsiveness across devices and browsers."
+        },
+        {
+          "id": 4,
+          "title": "Implement Visualization Components for Each Tab",
+          "description": "Develop and integrate the specific data visualizations for each tab as defined in the PRD, ensuring accuracy and performance.",
+          "dependencies": [
+            3
+          ],
+          "details": "Use appropriate charting libraries or custom components to create visualizations such as bar charts, line graphs, heatmaps, or KPIs. Connect visualizations to data sources and implement dynamic updates if required.",
+          "status": "pending",
+          "testStrategy": "Validate data accuracy, rendering performance, and interaction behaviors through unit and integration tests."
+        },
+        {
+          "id": 5,
+          "title": "Conduct Final Testing and Optimize Dashboard Performance",
+          "description": "Perform comprehensive testing of the complete dashboard including all visualization tabs, followed by performance optimization and user feedback incorporation.",
+          "dependencies": [
+            4
+          ],
+          "details": "Test for usability, accessibility, cross-browser compatibility, and load times. Optimize data queries and visualization rendering to ensure smooth user experience. Collect feedback from stakeholders and end users to make final adjustments.",
+          "status": "pending",
+          "testStrategy": "Execute end-to-end testing scenarios, performance benchmarking, and gather user acceptance testing results."
+        },
+        {
+          "id": 6,
+          "title": "Define Dashboard Requirements and Layout",
+          "description": "Review the PRD and define the dashboard's structure, required visualization tabs, and user needs.",
+          "dependencies": [],
+          "details": "Document the dashboard layout, including the number of tabs, main sections, and key metrics to display. Use best practices for visual hierarchy and logical grouping[3][5].",
+          "status": "pending",
+          "testStrategy": "Review documentation with stakeholders for completeness and clarity."
+        },
+        {
+          "id": 7,
+          "title": "Set Up Dashboard Framework and Navigation",
+          "description": "Implement the basic dashboard framework with navigation controls for switching between visualization tabs.",
+          "dependencies": [],
+          "details": "Develop the main dashboard container and navigation tabs. Ensure smooth transitions and intuitive user experience[5].",
+          "status": "pending",
+          "testStrategy": "Manual testing of navigation and tab switching."
+        },
+        {
+          "id": 8,
+          "title": "Develop Core Visualizations for Each Tab",
+          "description": "Create the main data visualizations for each specified tab according to the requirements.",
+          "dependencies": [],
+          "details": "Implement charts, graphs, or tables for each tab. Use appropriate visualization types for the data and ensure clarity and consistency[3][4].",
+          "status": "pending",
+          "testStrategy": "Unit testing of individual visualizations and cross-check with requirements."
+        },
+        {
+          "id": 9,
+          "title": "Integrate Data Sources and Implement Data Binding",
+          "description": "Connect each visualization to its respective data source and ensure real-time or periodic data updates.",
+          "dependencies": [],
+          "details": "Set up data connections, implement data binding, and handle data refresh logic. Ensure data accuracy and performance[3].",
+          "status": "pending",
+          "testStrategy": "Test data loading, binding, and refresh functionality."
+        },
+        {
+          "id": 10,
+          "title": "Apply Styling, Accessibility, and Final Review",
+          "description": "Apply consistent styling, ensure accessibility, and perform a final review of the dashboard.",
+          "dependencies": [],
+          "details": "Implement a style guide, ensure color contrast, font readability, and keyboard navigation. Perform a comprehensive review for usability and completeness[5].",
+          "status": "pending",
+          "testStrategy": "Accessibility audit and user acceptance testing."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Implement Drift Detection and Visualization",
+      "description": "Detect and visualize potential concept drift in model outputs.",
+      "details": "",
+      "testStrategy": "",
+      "priority": "medium",
+      "dependencies": [],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 9,
+      "title": "Integrate Meta-Reflection Logging",
+      "description": "Log meta-information about model behavior and confidence.",
+      "details": "",
+      "testStrategy": "",
+      "priority": "medium",
+      "dependencies": [],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 10,
+      "title": "Test and Validate System Functionality",
+      "description": "Conduct thorough testing to ensure all components work as expected.",
+      "details": "",
+      "testStrategy": "",
+      "priority": "medium",
+      "dependencies": [],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 11,
+      "title": "Implement RLHF Dashboard",
+      "description": "Implement the RLHF Attunement Dashboard based on the detailed plan in rlhf_dashboard_plan.md",
+      "details": "Successfully implemented a comprehensive dashboard with all required tabs and features",
+      "testStrategy": "Manual testing of all dashboard components and functionality",
+      "status": "completed",
+      "dependencies": [],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Analyze and Extract Requirements from rlhf_dashboard_plan.md",
+          "description": "Thoroughly review the rlhf_dashboard_plan.md document to extract all functional and non-functional requirements for the RLHF Attunement Dashboard.",
+          "dependencies": [],
+          "details": "Read the detailed plan to identify key dashboard features, data sources, user interactions, visualization types, and performance criteria. Document these requirements clearly to guide subsequent implementation steps.",
+          "status": "completed",
+          "testStrategy": "Verify completeness by cross-referencing extracted requirements with the original plan and confirm understanding with stakeholders if possible."
+        },
+        {
+          "id": 2,
+          "title": "Design the RLHF Dashboard Architecture and UI/UX",
+          "description": "Create the architectural design and user interface/user experience (UI/UX) mockups for the RLHF Attunement Dashboard based on extracted requirements.",
+          "dependencies": [],
+          "details": "Define the system components, data flow, and integration points. Design wireframes and prototypes for dashboard layout, controls, and visualizations ensuring usability and clarity for RLHF metrics and insights.",
+          "status": "completed",
+          "testStrategy": "Conduct design reviews and usability walkthroughs with team members or potential users to validate design choices."
+        },
+        {
+          "id": 3,
+          "title": "Implement Backend Data Integration and Processing",
+          "description": "Develop the backend services to collect, process, and serve RLHF-related data to the dashboard frontend.",
+          "dependencies": [],
+          "details": "Set up data pipelines to ingest RLHF training metrics, reward model outputs, and other relevant data. Implement APIs or data endpoints to provide processed data in real-time or batch mode as required by the dashboard.",
+          "status": "completed",
+          "testStrategy": "Unit test data processing modules and perform integration tests to ensure data accuracy and timely availability."
+        },
+        {
+          "id": 4,
+          "title": "Develop Frontend Dashboard Components and Visualizations",
+          "description": "Build the frontend components of the RLHF Attunement Dashboard including charts, tables, and interactive elements as per the UI/UX design.",
+          "dependencies": [],
+          "details": "Use appropriate frontend frameworks and libraries to implement responsive and dynamic visualizations that reflect RLHF training progress, reward signals, and model performance indicators.",
+          "status": "completed",
+          "testStrategy": "Perform frontend unit testing, UI responsiveness tests, and user acceptance testing to ensure functionality and usability."
+        },
+        {
+          "id": 5,
+          "title": "Test, Deploy, and Document the RLHF Attunement Dashboard",
+          "description": "Conduct comprehensive testing, deploy the dashboard to the target environment, and create user and maintenance documentation.",
+          "dependencies": [],
+          "details": "Execute end-to-end testing including performance, security, and usability tests. Deploy the dashboard ensuring proper configuration and monitoring. Document installation steps, usage instructions, and troubleshooting guidelines.",
+          "status": "completed",
+          "testStrategy": "Use automated and manual testing approaches; gather user feedback post-deployment for continuous improvement."
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Implement Attunement Timeline Tab",
+      "description": "Create the Attunement Timeline tab for temporal homeostasis visualization as detailed in the RLHF Dashboard Plan.",
+      "details": "Successfully implemented the Attunement Timeline tab with alignment metrics over time visualizations, human-AI agreement plots, and interactive metrics display",
+      "testStrategy": "Manual testing of timeline visualizations and interaction features",
+      "status": "completed",
+      "dependencies": [
+        11
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 13,
+      "title": "Implement Confidence & Calibration Tab",
+      "description": "Create the Confidence & Calibration tab for cognitive thermoregulation visualization as detailed in the RLHF Dashboard Plan.",
+      "details": "Successfully implemented the Confidence & Calibration tab with reliability diagrams, ECE history, and confidence analysis",
+      "testStrategy": "Manual testing of calibration visualizations and their accuracy",
+      "status": "completed",
+      "dependencies": [
+        11
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 14,
+      "title": "Implement Drift Clusters Tab",
+      "description": "Create the Drift Clusters tab for tissue fragmentation visualization as detailed in the RLHF Dashboard Plan.",
+      "details": "Successfully implemented the Drift Clusters tab with interactive cluster visualization, cluster statistics, and drift entropy analysis",
+      "testStrategy": "Manual testing of drift cluster visualizations and interactive features",
+      "status": "completed",
+      "dependencies": [
+        11
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 15,
+      "title": "Implement Model Evolution Tab",
+      "description": "Create the Model Evolution tab for symbolic anatomy visualization as detailed in the RLHF Dashboard Plan.",
+      "details": "Successfully implemented the Model Evolution tab with checkpoint timeline, version comparison, and performance metrics",
+      "testStrategy": "Manual testing of model evolution visualizations and comparison features",
+      "status": "completed",
+      "dependencies": [
+        11
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 16,
+      "title": "Implement Human-System Entanglement Tab",
+      "description": "Create the Human-System Entanglement tab for preference integration visualization as detailed in the RLHF Dashboard Plan.",
+      "details": "Successfully implemented the Human-System Entanglement tab with user preference timeline, theme analysis, and preference patterns",
+      "testStrategy": "Manual testing of preference visualizations and data accuracy",
+      "status": "completed",
+      "dependencies": [
+        11
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 17,
+      "title": "Implement Dashboard Backend Modules",
+      "description": "Create the backend data processing modules (data_loader.py, visualizations.py, themes.py, utils.py) as detailed in the RLHF Dashboard Plan.",
+      "details": "Successfully implemented the backend modules for data processing, visualizations, and utility functions",
+      "testStrategy": "Unit testing of backend modules and integration testing with the frontend",
+      "status": "completed",
+      "dependencies": [
+        11
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 18,
+      "title": "Enhance Annotation Interface",
+      "description": "Improve the annotation interface with advanced features for better user experience and data collection",
+      "details": "Successfully implemented an enhanced annotation interface with template library, batch generation, quality metrics, and detailed feedback collection",
+      "testStrategy": "Manual testing of annotation features and data collection",
+      "status": "completed",
+      "dependencies": [
+        11
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 19,
+      "title": "Implement Chat Interface for RLHF System",
+      "description": "Create an interactive chat interface for communicating with the RLHF system about metrics and insights",
+      "details": "Successfully implemented a chat interface with DeepSeek API integration, topic buttons, dark mode, and chat history export/import",
+      "testStrategy": "Manual testing of chat functionality and API integration",
+      "status": "completed",
+      "dependencies": [
+        11
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 20,
+      "title": "Dashboard Performance Optimization",
+      "description": "Optimize the RLHF dashboard for better performance with large datasets and complex visualizations",
+      "details": "Improve loading times, rendering efficiency, and overall responsiveness of the dashboard",
+      "testStrategy": "Performance benchmarking before and after optimization",
+      "status": "pending",
+      "dependencies": [
+        11, 12, 13, 14, 15, 16, 17, 18, 19
+      ],
+      "priority": "medium",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Analyze Dashboard Performance Bottlenecks",
+          "description": "Identify performance bottlenecks in the dashboard using profiling tools and user feedback",
+          "dependencies": [],
+          "details": "Use browser developer tools, Streamlit performance metrics, and user feedback to identify slow-loading components and inefficient operations",
+          "status": "pending",
+          "testStrategy": "Document baseline performance metrics for comparison"
+        },
+        {
+          "id": 2,
+          "title": "Optimize Data Loading and Caching",
+          "description": "Implement efficient data loading strategies and caching mechanisms to reduce data processing overhead",
+          "dependencies": [1],
+          "details": "Use Streamlit's caching decorators, implement data pagination, and optimize database queries to improve data loading performance",
+          "status": "pending",
+          "testStrategy": "Measure data loading times before and after optimization"
+        },
+        {
+          "id": 3,
+          "title": "Optimize Visualization Rendering",
+          "description": "Improve the rendering efficiency of visualizations, especially for complex charts and large datasets",
+          "dependencies": [1],
+          "details": "Use data aggregation, implement progressive loading, and optimize chart configurations to improve rendering performance",
+          "status": "pending",
+          "testStrategy": "Measure rendering times and memory usage before and after optimization"
+        },
+        {
+          "id": 4,
+          "title": "Implement UI Performance Improvements",
+          "description": "Optimize UI components and interactions for better responsiveness and user experience",
+          "dependencies": [1],
+          "details": "Reduce unnecessary UI updates, optimize component hierarchies, and implement lazy loading for improved UI performance",
+          "status": "pending",
+          "testStrategy": "Conduct user testing to evaluate UI responsiveness improvements"
+        },
+        {
+          "id": 5,
+          "title": "Performance Testing and Validation",
+          "description": "Conduct comprehensive performance testing to validate optimization improvements",
+          "dependencies": [2, 3, 4],
+          "details": "Test dashboard performance with various data volumes, user scenarios, and device/browser combinations",
+          "status": "pending",
+          "testStrategy": "Compare performance metrics before and after optimization and document improvements"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "title": "Enhance Accessibility and Internationalization",
+      "description": "Improve the dashboard's accessibility for users with disabilities and add support for multiple languages",
+      "details": "Implement accessibility best practices and internationalization features throughout the dashboard",
+      "testStrategy": "Accessibility testing with screen readers and automated tools, testing with different language settings",
+      "status": "pending",
+      "dependencies": [
+        11, 12, 13, 14, 15, 16, 17, 18, 19
+      ],
+      "priority": "medium",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Conduct Accessibility Audit",
+          "description": "Audit the dashboard for accessibility issues using automated tools and manual testing",
+          "dependencies": [],
+          "details": "Use accessibility testing tools to identify WCAG compliance issues and areas for improvement",
+          "status": "pending",
+          "testStrategy": "Document accessibility baseline with automated tools like Axe or Lighthouse"
+        },
+        {
+          "id": 2,
+          "title": "Implement Keyboard Navigation and Screen Reader Support",
+          "description": "Improve keyboard navigation and screen reader compatibility throughout the dashboard",
+          "dependencies": [1],
+          "details": "Add proper focus management, ARIA attributes, and semantic HTML to improve accessibility",
+          "status": "pending",
+          "testStrategy": "Test with keyboard-only navigation and screen readers like NVDA or VoiceOver"
+        },
+        {
+          "id": 3,
+          "title": "Enhance Color Contrast and Text Readability",
+          "description": "Improve color contrast ratios and text readability for users with visual impairments",
+          "dependencies": [1],
+          "details": "Ensure all text meets WCAG AA contrast requirements and implement adjustable text sizes",
+          "status": "pending",
+          "testStrategy": "Test with color contrast analyzers and vision impairment simulators"
+        },
+        {
+          "id": 4,
+          "title": "Implement Internationalization Framework",
+          "description": "Set up an internationalization framework to support multiple languages",
+          "dependencies": [],
+          "details": "Implement a translation system with language selection and text replacement capabilities",
+          "status": "pending",
+          "testStrategy": "Test with different language settings to ensure proper translation"
+        },
+        {
+          "id": 5,
+          "title": "Create Language Translation Files",
+          "description": "Create translation files for supported languages and implement language switching",
+          "dependencies": [4],
+          "details": "Develop translation files for key languages and implement a language selection mechanism",
+          "status": "pending",
+          "testStrategy": "Test dashboard functionality with different language settings"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "title": "Comprehensive Documentation and User Guide",
+      "description": "Create detailed documentation for the RLHF dashboard including user guides, API documentation, and maintenance instructions",
+      "details": "Develop comprehensive documentation to help users and developers understand and use the dashboard effectively",
+      "testStrategy": "Review documentation for completeness, clarity, and accuracy",
+      "status": "pending",
+      "dependencies": [
+        11, 12, 13, 14, 15, 16, 17, 18, 19
+      ],
+      "priority": "medium",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create User Documentation",
+          "description": "Develop user-facing documentation explaining how to use the dashboard and interpret visualizations",
+          "dependencies": [],
+          "details": "Create user guides with step-by-step instructions, screenshots, and explanations of dashboard features",
+          "status": "pending",
+          "testStrategy": "User testing with documentation to verify clarity and usefulness"
+        },
+        {
+          "id": 2,
+          "title": "Develop Technical Documentation",
+          "description": "Create technical documentation for developers and maintainers",
+          "dependencies": [],
+          "details": "Document system architecture, data flow, API endpoints, and code organization",
+          "status": "pending",
+          "testStrategy": "Review by technical stakeholders to ensure completeness"
+        },
+        {
+          "id": 3,
+          "title": "Create API Documentation",
+          "description": "Document all APIs and data endpoints used by the dashboard",
+          "dependencies": [],
+          "details": "Create comprehensive API documentation including endpoints, parameters, response formats, and examples",
+          "status": "pending",
+          "testStrategy": "Verify API documentation with actual API behavior"
+        },
+        {
+          "id": 4,
+          "title": "Write Installation and Deployment Guide",
+          "description": "Create documentation for installing and deploying the dashboard in different environments",
+          "dependencies": [],
+          "details": "Document installation requirements, configuration options, and deployment procedures",
+          "status": "pending",
+          "testStrategy": "Test installation following the documented steps in a clean environment"
+        },
+        {
+          "id": 5,
+          "title": "Develop In-Dashboard Help System",
+          "description": "Implement an interactive help system within the dashboard",
+          "dependencies": [],
+          "details": "Create contextual help tooltips, guided tours, and help pages accessible from within the dashboard",
+          "status": "pending",
+          "testStrategy": "User testing of the help system with different scenarios"
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "title": "Deploy RLHF Dashboard to Production",
+      "description": "Deploy the RLHF dashboard to a production environment with monitoring and maintenance procedures",
+      "details": "Set up production deployment, monitoring, and maintenance processes for the dashboard",
+      "testStrategy": "Verify production deployment works correctly and is accessible to users",
+      "status": "pending",
+      "dependencies": [
+        11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+      ],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Prepare Production Environment",
+          "description": "Set up and configure the production environment for the dashboard",
+          "dependencies": [],
+          "details": "Provision servers, configure networking, and set up required services for production deployment",
+          "status": "pending",
+          "testStrategy": "Verify environment configuration meets security and performance requirements"
+        },
+        {
+          "id": 2,
+          "title": "Implement CI/CD Pipeline",
+          "description": "Set up continuous integration and continuous deployment pipeline for the dashboard",
+          "dependencies": [],
+          "details": "Configure CI/CD tools to automate testing, building, and deployment processes",
+          "status": "pending",
+          "testStrategy": "Test CI/CD pipeline with sample changes to ensure proper deployment"
+        },
+        {
+          "id": 3,
+          "title": "Deploy Dashboard to Production",
+          "description": "Deploy the dashboard to the production environment using the CI/CD pipeline",
+          "dependencies": [1, 2],
+          "details": "Execute production deployment and verify successful installation",
+          "status": "pending",
+          "testStrategy": "Perform smoke tests to verify basic functionality after deployment"
+        },
+        {
+          "id": 4,
+          "title": "Implement Monitoring and Alerting",
+          "description": "Set up monitoring and alerting for the production dashboard",
+          "dependencies": [3],
+          "details": "Configure monitoring tools to track system health, performance metrics, and user activity",
+          "status": "pending",
+          "testStrategy": "Test monitoring by simulating errors and performance issues"
+        },
+        {
+          "id": 5,
+          "title": "Establish Maintenance Procedures",
+          "description": "Define and document maintenance procedures for the production dashboard",
+          "dependencies": [3, 4],
+          "details": "Create procedures for updates, backups, troubleshooting, and disaster recovery",
+          "status": "pending",
+          "testStrategy": "Verify maintenance procedures through simulated scenarios"
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "title": "Fix Dashboard Deprecation Warnings",
+      "description": "Address deprecation warnings in the dashboard code, particularly the Streamlit API changes",
+      "details": "Implemented a compatibility layer that automatically handles deprecated Streamlit API calls",
+      "testStrategy": "Verify no deprecation warnings appear during dashboard operation",
+      "status": "completed",
+      "dependencies": [
+        11, 12, 13, 14, 15, 16, 17, 18, 19
+      ],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Update Streamlit API Calls",
+          "description": "Replace deprecated Streamlit API calls with their current equivalents",
+          "dependencies": [],
+          "details": "Created a compatibility layer that monkey-patches st.experimental_rerun() and converts use_column_width to use_container_width",
+          "status": "completed",
+          "testStrategy": "Run the dashboard and verify no deprecation warnings appear in the console"
+        },
+        {
+          "id": 2,
+          "title": "Test Dashboard Functionality After Updates",
+          "description": "Ensure all dashboard functionality works correctly after updating deprecated API calls",
+          "dependencies": [1],
+          "details": "Tested all dashboard tabs, features, and interactions to ensure they work as expected with the compatibility layer",
+          "status": "completed",
+          "testStrategy": "Perform manual testing of all dashboard features"
+        },
+        {
+          "id": 3,
+          "title": "Update Documentation for API Changes",
+          "description": "Update any documentation that references deprecated API calls",
+          "dependencies": [1],
+          "details": "Added code comments in the compatibility layer explaining the API changes and why they're needed",
+          "status": "completed",
+          "testStrategy": "Review documentation for accuracy"
+        }
+      ]
+    }
+  ]
+}

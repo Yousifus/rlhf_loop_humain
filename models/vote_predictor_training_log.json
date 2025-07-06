@@ -1,0 +1,25 @@
+{
+  "model_name": "prajjwal1/bert-tiny",
+  "training_params": {
+    "model_name": "prajjwal1/bert-tiny",
+    "max_length": 512,
+    "offline": false,
+    "batch_size": 2,
+    "epochs": 1,
+    "learning_rate": 2e-05,
+    "weight_decay": 0.01,
+    "seed": 42,
+    "validation_split": 0.0,
+    "save_steps": 10,
+    "eval_steps": 10,
+    "logging_steps": 5,
+    "resume_from_checkpoint": false,
+    "early_stopping_patience": 3,
+    "early_stopping_threshold": 0.001
+  },
+  "dataset_size": 6,
+  "train_size": 6,
+  "val_size": 0,
+  "timestamp": "2025-05-21T12:06:18.207411",
+  "results": {}
+}

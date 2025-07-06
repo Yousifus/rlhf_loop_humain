@@ -1,0 +1,11 @@
+# Task ID: 13
+# Title: Implement Confidence & Calibration Tab
+# Status: pending
+# Dependencies: 11
+# Priority: high
+# Description: Create the Confidence & Calibration tab for cognitive thermoregulation visualization as detailed in the RLHF Dashboard Plan.
+# Details:
+
+
+# Test Strategy:
+

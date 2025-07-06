@@ -1,0 +1,52 @@
+{
+  "batch_name": "RLHF Fundamentals Sample",
+  "description": "A sample set of prompts for testing the batch processor",
+  "prompts": [
+    {
+      "prompt_id": "rlhf_basics_1",
+      "prompt": "Explain reinforcement learning from human feedback (RLHF) in simple terms."
+    },
+    {
+      "prompt_id": "rlhf_basics_2",
+      "prompt": "What are the main challenges in implementing RLHF systems?"
+    },
+    {
+      "prompt_id": "rlhf_basics_3",
+      "prompt": "How does RLHF compare to other machine learning approaches?"
+    },
+    {
+      "prompt_id": "rlhf_benefits_1",
+      "prompt": "What are the key benefits of using RLHF for language model alignment?"
+    },
+    {
+      "prompt_id": "rlhf_limitations_1",
+      "prompt": "What are the limitations and potential drawbacks of RLHF?"
+    },
+    {
+      "prompt_id": "rlhf_applications_1",
+      "prompt": "Describe three practical applications of RLHF in real-world AI systems."
+    },
+    {
+      "prompt_id": "rlhf_future_1",
+      "prompt": "How might RLHF techniques evolve over the next five years?"
+    },
+    {
+      "prompt_id": "rlhf_debate_1",
+      "prompt": "Some researchers argue that RLHF can lead to overfitting to human preferences. What's your perspective on this concern?"
+    },
+    {
+      "prompt_id": "rlhf_implementation_1",
+      "prompt": "What are the key components needed to implement an RLHF system from scratch?"
+    },
+    {
+      "prompt_id": "rlhf_ethics_1",
+      "prompt": "Discuss the ethical considerations that should be addressed when using RLHF."
+    }
+  ],
+  "metadata": {
+    "created": "2023-10-05",
+    "author": "RLHF Dashboard Team",
+    "version": "1.0.0",
+    "tags": ["rlhf", "fundamentals", "sample"]
+  }
+} 

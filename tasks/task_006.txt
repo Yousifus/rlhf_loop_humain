@@ -1,0 +1,11 @@
+# Task ID: 6
+# Title: Train Preference Model Using DistilBERT
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Train a preference model using DistilBERT to learn from human preferences.
+# Details:
+
+
+# Test Strategy:
+

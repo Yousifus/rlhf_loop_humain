@@ -1,0 +1,32 @@
+{
+  "models": {
+    "main": {
+      "provider": "perplexity",
+      "modelId": "sonar",
+      "maxTokens": 8000,
+      "temperature": 0.2
+    },
+    "research": {
+      "provider": "perplexity",
+      "modelId": "sonar-reasoning",
+      "maxTokens": 4000,
+      "temperature": 0.1
+    },
+    "fallback": {
+      "provider": "google",
+      "modelId": "gemini-2.0-flash",
+      "maxTokens": 32000,
+      "temperature": 0.2
+    }
+  },
+  "global": {
+    "logLevel": "info",
+    "debug": false,
+    "defaultSubtasks": 5,
+    "defaultPriority": "medium",
+    "projectName": "RLHF Symbolic Loop",
+    "ollamaBaseUrl": "http://localhost:11434/api",
+    "azureOpenaiBaseUrl": "https://your-endpoint.openai.azure.com/",
+    "userId": "1234567890"
+  }
+}

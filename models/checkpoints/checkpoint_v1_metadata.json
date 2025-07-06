@@ -1,0 +1,13 @@
+{
+  "version": "v1.0",
+  "timestamp": "2025-05-21T16:30:00.000000",
+  "training_samples": 500,
+  "accuracy": 0.71,
+  "calibration_error": 0.22,
+  "confidence_avg": 0.91,
+  "model_architecture": "DistilBERT-base",
+  "training_steps": 1200,
+  "learning_rate": 5e-5,
+  "batch_size": 16,
+  "notes": "Initial model trained on basic RLHF preference data"
+} 
