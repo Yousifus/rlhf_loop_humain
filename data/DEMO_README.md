@@ -7,6 +7,24 @@ This directory contains **comprehensive, realistic demo data** that showcases al
 **Problem:** Visitors need to generate data → annotate → train → wait months to see meaningful patterns  
 **Solution:** Instant access to 6 months of realistic RLHF evolution with 450+ diverse prompts!
 
+## 🔥 **NEW: Works with LM Studio for Complete Privacy!**
+
+**🏠 Zero-Config Local AI Integration**
+- **Complete Privacy** - All processing stays on your machine
+- **No Internet Required** - Perfect for offline portfolio demos  
+- **Zero API Costs** - Use powerful local models for free
+- **Professional Models** - Browse [lmstudio.ai/models](https://lmstudio.ai/models) for 100+ options
+
+**🚀 Quick Setup:**
+```bash
+# 1. Download LM Studio from lmstudio.ai
+# 2. Get any model from lmstudio.ai/models (Llama, Mistral, Qwen, etc.)
+# 3. Start server → Enable rich demo → Launch dashboard
+python scripts/demo_mode.py enable && streamlit run scripts/run_dashboard.py
+```
+
+**Perfect for secure environments, interviews, and offline demonstrations!**
+
 ## 📊 **What's Included: Rich Dataset**
 
 ### Demo Data Files
