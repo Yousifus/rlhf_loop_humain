@@ -1,7 +1,7 @@
 """
 Enhanced RLHF Dashboard - Professional Interface
 
-Enterprise-grade RLHF monitoring interface with comprehensive navigation
+RLHF monitoring interface with comprehensive navigation
 and advanced analytics capabilities.
 """
 
@@ -581,7 +581,7 @@ def create_footer():
         <p style="margin: 0;">
             Enhanced RLHF Dashboard v2.0 | 
             Professional RLHF system monitoring |
-            <span style="color: #2563eb;">Enterprise-grade analytics</span>
+            <span style="color: #2563eb;">Professional analytics</span>
         </p>
     </div>
     """, unsafe_allow_html=True)

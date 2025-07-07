@@ -70,7 +70,7 @@ from interface.sections.chat import display_chat_interface
 def main():
     """Main entry point for RLHF Pipeline Monitor"""
     
-    # Configure page with enterprise settings
+    # Configure page settings
     st.set_page_config(
         page_title="RLHF Pipeline Monitor | HUMAIN OS",
         page_icon="⚙️",
@@ -79,7 +79,7 @@ def main():
         menu_items={
             'Get Help': None,
             'Report a bug': None,
-            'About': "Enterprise RLHF pipeline monitoring system - HUMAIN OS Integration"
+            'About': "RLHF pipeline monitoring system - HUMAIN OS Integration"
         }
     )
     
@@ -92,7 +92,7 @@ def main():
     # Get model configuration
     model_config = get_model_config()
     
-    # Create enterprise header
+    # Create pipeline header
     create_pipeline_header()
     
     # Create RLHF pipeline sidebar navigation
@@ -178,10 +178,10 @@ def main():
     create_system_footer()
 
 def apply_humain_styling():
-    """Apply HUMAIN OS enterprise styling"""
+    """Apply HUMAIN OS styling"""
     st.markdown("""
     <style>
-    /* HUMAIN OS Enterprise Theme */
+    /* HUMAIN OS Theme */
     .main > div {
         background: #FFFFFF;
         color: #333333;
@@ -206,7 +206,7 @@ def apply_humain_styling():
         box-shadow: 0 4px 8px rgba(29, 181, 132, 0.25);
     }
     
-    /* Enterprise Headers */
+    /* Professional Headers */
     h1, h2, h3 {
         color: #2c3e50;
         font-weight: 600;
@@ -228,7 +228,7 @@ def apply_humain_styling():
         color: #34495e;
     }
     
-    /* Enterprise Cards */
+    /* Professional Cards */
     .stMetric {
         background: white;
         padding: 20px;
@@ -330,7 +330,7 @@ def apply_humain_styling():
     """, unsafe_allow_html=True)
 
 def create_pipeline_header():
-    """Create enterprise RLHF pipeline header"""
+    """Create RLHF pipeline header"""
     st.markdown("""
     <div style="
         background: white;
@@ -357,7 +357,7 @@ def create_pipeline_header():
             font-weight: 400;
             margin-bottom: 16px;
         ">
-            Enterprise ML Operations • HUMAIN OS Integration
+            ML Operations • HUMAIN OS Integration
         </p>
         <div style="
             display: flex;
@@ -486,7 +486,7 @@ def initialize_pipeline_session_state():
         'pipeline_status': 'operational',
         'last_data_refresh': 0,
         'system_config': {
-            "theme": "humain-enterprise",
+            "theme": "humain-professional",
             "auto_refresh": True,
             "monitoring_level": "comprehensive"
         }
@@ -883,7 +883,7 @@ def create_system_footer():
             ⚙️ RLHF Pipeline Monitor v1.0
         </p>
         <p style="margin: 8px 0 0 0; color: #6B7280; font-weight: 400;">
-            Enterprise ML Operations Platform | HUMAIN OS Integration
+            ML Operations Platform | HUMAIN OS Integration
         </p>
         <p style="margin: 8px 0 0 0; color: #6B7280; font-size: 11px;">
             Professional RLHF monitoring for ML engineering teams | 

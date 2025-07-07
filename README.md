@@ -1,29 +1,28 @@
 # 🤖 RLHF Loop System
-### *Enterprise-Grade Reinforcement Learning from Human Feedback Platform*
+### *Reinforcement Learning from Human Feedback Platform*
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-4.0+-blue.svg)](https://typescriptlang.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)](https://streamlit.io)
 [![Transformers](https://img.shields.io/badge/🤗%20Transformers-4.0+-yellow.svg)](https://huggingface.co/transformers)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Code Style](https://img.shields.io/badge/Code%20Style-Professional-brightgreen.svg)](https://github.com/Yousifus/rlhf_loop_humain)
 
 ---
 
 ## 🎯 **Project Overview**
 
-A comprehensive **Reinforcement Learning from Human Feedback (RLHF)** system designed for enterprise deployment. This platform implements a complete feedback loop with predictive modeling, calibrated confidence scores, and real-time monitoring capabilities.
+A comprehensive **Reinforcement Learning from Human Feedback (RLHF)** system with predictive modeling, calibrated confidence scores, and real-time monitoring capabilities through a **RLHF Pipeline Monitor** dashboard.
 
 ### 🌟 **Key Features**
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| 🎛️ **Professional Dashboard** | Real-time monitoring with enterprise UI | ✅ Complete |
+| 🎛️ **Pipeline Dashboard** | 4-phase RLHF pipeline monitoring interface | ✅ Complete |
 | 🧠 **AI Vote Prediction** | Transformer-based preference modeling | ✅ Complete |
-| 📊 **Drift Detection** | Advanced model performance monitoring | ✅ Complete |
+| 📊 **Drift Detection** | Model performance monitoring | ✅ Complete |
 | ⚡ **Batch Processing** | Parallel prompt processing pipeline | ✅ Complete |
 | 🎯 **Calibrated Confidence** | Temperature-scaled prediction confidence | ✅ Complete |
-| 🔄 **Live Training Loop** | Continuous model improvement | ✅ Complete |
+| 🔄 **Training Loop** | Continuous model improvement | ✅ Complete |
 
 ---
 
@@ -31,19 +30,35 @@ A comprehensive **Reinforcement Learning from Human Feedback (RLHF)** system des
 
 ```mermaid
 graph TD
-    A[🎤 Prompt Generation] --> B[🤖 Model Completions]
-    B --> C[👥 Human Feedback]
-    C --> D[🧠 Vote Predictor Training]
-    D --> E[📊 Calibration & Confidence]
-    E --> F[🔍 Drift Monitoring]
-    F --> G[🎛️ Dashboard Visualization]
-    G --> H[🔄 RLHF Loop Control]
-    H --> A
+    subgraph "Data Collection Phase"
+        A[📊 Data Ingestion] --> B[🔍 Quality Control]
+        B --> C[📈 Dataset Analytics]
+    end
     
-    style A fill:#e1f5fe
-    style D fill:#f3e5f5
-    style G fill:#e8f5e8
-    style H fill:#fff3e0
+    subgraph "Training Phase"
+        D[🚀 Training Status] --> E[📊 Loss Monitoring]
+        E --> F[⚙️ Resource Utilization]
+    end
+    
+    subgraph "Evaluation Phase"
+        G[🎯 Performance Metrics] --> H[📏 Calibration Analysis]
+        H --> I[🔍 Drift Detection]
+    end
+    
+    subgraph "Deployment Phase"
+        J[🌐 Serving Status] --> K[📊 Production Metrics]
+        K --> L[💻 System Health]
+    end
+    
+    C --> D
+    F --> G
+    I --> J
+    L --> A
+    
+    style A fill:#1DB584,color:#fff
+    style D fill:#1DB584,color:#fff
+    style G fill:#1DB584,color:#fff
+    style J fill:#1DB584,color:#fff
 ```
 
 ---
@@ -65,15 +80,16 @@ cd rlhf_loop_humain
 pip install -r requirements.txt
 npm install
 
-# Launch the dashboard
-python scripts/run_enhanced_dashboard_v2.py
+# Launch the RLHF Pipeline Monitor
+python scripts/run_dashboard.py
 ```
 
 ### 🎛️ **Dashboard Access**
 ```
 🌐 Local:     http://localhost:8501
-🔧 Config:    Streamlit-based professional interface
-📊 Features:  Real-time monitoring, analytics, model training
+🔧 Interface: RLHF Pipeline Monitor (4-Phase Structure)
+📊 Features:  Data Collection | Training | Evaluation | Deployment
+🔍 Debug:     http://localhost:8501?debug=chat (Hidden chat interface)
 ```
 
 ---
@@ -84,10 +100,13 @@ python scripts/run_enhanced_dashboard_v2.py
 rlhf_loop_humain/
 ├── 🎨 web/              # Frontend components & interfaces
 ├── 🚀 scripts/          # Automation & deployment tools  
+│   └── run_dashboard.py # Main RLHF Pipeline Monitor
 ├── 🧪 tests/            # Quality assurance & validation
 ├── ⚙️ config/           # Configuration management
 ├── 📚 docs/             # Technical documentation
-├── 🤖 interface/        # AI dashboard system
+├── 🤖 interface/        # Dashboard sections & components
+│   ├── sections/        # 4-phase pipeline sections
+│   └── components/      # Reusable UI components
 ├── 🧠 models/           # ML models & checkpoints
 ├── 📊 data/             # Training data & pipelines
 ├── 🛠️ utils/            # Core utilities & APIs
@@ -105,67 +124,65 @@ rlhf_loop_humain/
 - **📈 NumPy/Pandas** - Data processing & analysis
 
 ### 🎛️ **Dashboard & Visualization** 
-- **🎨 Streamlit** - Professional web interface
+- **🎨 Streamlit** - Web interface with HUMAIN styling
 - **📊 Plotly** - Interactive data visualization
 - **🎯 Matplotlib** - Statistical plotting
-- **🎨 Custom CSS** - Enterprise-grade styling
+- **🎨 Custom CSS** - HUMAIN OS design system
 
-### 🚀 **Infrastructure & Deployment**
+### 🚀 **Infrastructure**
 - **🐍 Python 3.8+** - Core runtime environment
 - **📝 TypeScript** - Type-safe frontend development
 - **⚡ PowerShell** - Windows automation scripts
 - **🔧 Git** - Version control & collaboration
 
 ### 🔗 **AI API Integration**
-- **🤖 DeepSeek** - Advanced language model API
+- **🤖 DeepSeek** - Language model API
 - **🧠 OpenAI** - GPT model integration
 - **🏠 LM Studio** - Local model deployment
 - **🔄 RESTful APIs** - Standardized integrations
 
 ---
 
-## 📊 **Core Components**
+## 📊 **RLHF Pipeline Monitor**
 
-### 🎯 **Vote Prediction System**
-Advanced transformer-based binary preference modeling with calibrated confidence scores:
+### 🏭 **4-Phase Dashboard Structure**
+The dashboard is organized around the RLHF pipeline lifecycle:
 
-```python
-# High-level architecture
-Prompt + Completions → BERT Encoder → Classification Head → Calibrated Confidence
-```
+#### **📊 Phase 1: Data Collection**
+- **Data Ingestion Pipeline** - Real-time data streaming monitoring
+- **Annotation Quality Control** - Inter-annotator agreement tracking
+- **Dataset Analytics** - Data distribution analysis
 
-**Features:**
-- 🎯 **Calibrated Predictions** - Temperature & Platt scaling
-- 📊 **Performance Monitoring** - Real-time accuracy tracking  
-- 🔍 **Drift Detection** - Statistical change detection
-- 🔄 **Active Learning** - Intelligent retraining triggers
+#### **🚀 Phase 2: Training**
+- **Training Status Dashboard** - Live training progress monitoring
+- **Loss Curve Analysis** - Multi-metric performance tracking
+- **Resource Utilization** - GPU/CPU/Memory monitoring
 
-### 🎛️ **Professional Dashboard**
-Enterprise-grade monitoring interface with comprehensive analytics:
+#### **🎯 Phase 3: Evaluation**
+- **Performance Metrics** - Model accuracy and effectiveness
+- **Calibration Analysis** - Confidence alignment validation
+- **Drift Detection** - Statistical change monitoring
 
-- **📈 Real-time Metrics** - Model performance & system health
-- **🎯 Calibration Diagnostics** - Confidence validation & reliability
-- **🔍 Drift Analysis** - Temporal performance monitoring
-- **💬 Interactive Chat** - Direct model interaction interface
-- **📊 Batch Processing** - Parallel completion generation
+#### **🌐 Phase 4: Deployment**
+- **Serving Status** - Production deployment monitoring
+- **Production Metrics** - Live inference performance
+- **System Health** - Infrastructure monitoring
 
-### ⚡ **Automation Pipeline**
-Complete RLHF loop automation with enterprise deployment:
-
-- **🔄 Continuous Training** - Automated model improvement
-- **📊 Data Processing** - Efficient batch operations
-- **🎯 Quality Assurance** - Comprehensive testing suite
-- **🚀 Deployment Tools** - Production-ready scripts
+### 🎨 **HUMAIN OS Design System**
+- **Primary Color:** `#1DB584` (HUMAIN Teal)
+- **Clean Interface:** Professional white backgrounds
+- **Responsive Layout** - Mobile-friendly design
+- **Performance Optimized** - Fast loading times
 
 ---
 
 ## 🎯 **Use Cases**
 
-### 🏢 **Enterprise Applications**
-- **Content Moderation** - Automated harmful content detection
-- **Customer Support** - Intelligent response ranking
-- **Product Recommendations** - Preference-based suggestions
-- **Quality Assurance** - Automated output validation
+### 🏢 **Production Applications**
+- **RLHF Pipeline Management** - Complete lifecycle monitoring
+- **Model Performance Tracking** - Real-time accuracy monitoring
+- **Quality Assurance** - Automated validation and testing
+- **Deployment Monitoring** - Live system health tracking
 
 ### 🔬 **Research Applications**  
 - **RLHF Methodology** - Human preference learning research
@@ -186,18 +203,20 @@ Complete RLHF loop automation with enterprise deployment:
 
 ---
 
-## 🚀 **Getting Started Guides**
+## 🚀 **Getting Started**
 
-### 🎛️ **Dashboard Deployment**
+### 🎛️ **RLHF Pipeline Monitor**
 ```bash
-# Launch full-featured dashboard
-python scripts/run_enhanced_dashboard_v2.py
+# Launch the main dashboard
+python scripts/run_dashboard.py
 
-# With DeepSeek integration
-scripts/run_with_deepseek.ps1
+# With API key setup (guided in-dashboard)
+# 1. Open http://localhost:8501
+# 2. Configure DeepSeek API key in sidebar
+# 3. Access all 4 pipeline phases
 
-# Custom configuration
-python scripts/setup_dashboard.py --config custom
+# Debug mode with chat interface
+http://localhost:8501?debug=chat
 ```
 
 ### 🧠 **Model Training**
@@ -212,7 +231,7 @@ python scripts/train_reward_model.py
 python utils/vote_predictor/calibrate.py
 ```
 
-### 🔍 **Quality Assurance**
+### 🔍 **Testing**
 ```bash
 # Run complete test suite
 python -m pytest tests/ -v
@@ -226,24 +245,22 @@ python tests/test_reflection_data.py
 
 ---
 
-## 🛡️ **Enterprise Features**
+## 🛡️ **Features**
 
 ### 🔐 **Security & Privacy**
-- **🔒 Secure API Integration** - Encrypted communication
-- **👥 User Access Control** - Role-based permissions
-- **📝 Audit Logging** - Comprehensive activity tracking
-- **🛡️ Data Protection** - Privacy-first design
+- **🔒 API Integration** - In-dashboard key management
+- **📝 Audit Logging** - Activity tracking
+- **🛡️ Data Protection** - Privacy-focused design
 
 ### 📊 **Monitoring & Analytics**
-- **📈 Real-time Dashboards** - Live performance metrics
-- **🚨 Alert Systems** - Automated issue detection
-- **📋 Reporting Tools** - Executive-level insights
-- **🔍 Diagnostic Tools** - Deep system analysis
+- **📈 Real-time Dashboards** - 4-phase pipeline monitoring
+- **🚨 Alert Systems** - Issue detection
+- **📋 Reporting Tools** - Performance insights
+- **🔍 Diagnostic Tools** - System analysis
 
-### ⚡ **Performance & Scalability**
+### ⚡ **Performance**
 - **🚀 Optimized Processing** - Efficient batch operations
 - **📊 Memory Management** - Resource optimization
-- **🔄 Horizontal Scaling** - Multi-instance deployment
 - **⚡ Caching Systems** - Response time optimization
 
 ---
@@ -253,15 +270,14 @@ python tests/test_reflection_data.py
 | Resource | Description | Link |
 |----------|-------------|------|
 | 🏗️ **Architecture Guide** | System design & components | [`docs/architecture.md`](docs/architecture.md) |
-| 📊 **API Documentation** | REST API reference | [`docs/api_reference.md`](docs/) |
-| 🚀 **Deployment Guide** | Production setup instructions | [`docs/deployment.md`](docs/) |
+| 🚀 **Deployment Guide** | Setup instructions | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) |
 | 🧪 **Testing Guide** | QA procedures & validation | [`tests/README.md`](tests/README.md) |
 
 ---
 
 ## 🤝 **Contributing**
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ### 🛠️ **Development Setup**
 ```bash
@@ -272,7 +288,7 @@ git clone https://github.com/yourusername/rlhf_loop_humain.git
 git checkout -b feature/amazing-feature
 
 # Install development dependencies
-pip install -r requirements-dev.txt
+pip install -r requirements.txt
 
 # Run tests
 python -m pytest tests/
@@ -289,13 +305,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 **Acknowledgments**
 
 - **🤗 Hugging Face** - Transformers library and model ecosystem
-- **🎨 Streamlit** - Amazing web application framework  
-- **🔥 PyTorch** - Powerful deep learning platform
-- **🧠 OpenAI** - Pioneering RLHF methodology research
+- **🎨 Streamlit** - Web application framework  
+- **🔥 PyTorch** - Deep learning platform
+- **🧠 OpenAI** - RLHF methodology research
 
 ---
 
-## 📞 **Contact & Support**
+## 📞 **Contact**
 
 - **👨‍💻 Developer:** Yousifus
 - **📧 Email:** [yoawlaki@gmail.com](mailto:yoawlaki@gmail.com)
@@ -306,7 +322,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-### 🌟 **Built with ❤️ for Enterprise AI Applications** 🌟
+### 🌟 **Built with ❤️ for AI Research & Development** 🌟
 
 *Transforming human feedback into intelligent systems*
 

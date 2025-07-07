@@ -29,9 +29,9 @@ These components integrate with the main RLHF dashboard and can be embedded or u
 
 ## 🎨 Design System
 
-The web components follow enterprise design principles:
+The web components follow professional design principles:
 - **Professional color scheme** - Blue-based theme for business environments
-- **Responsive layout** - Mobile-first, enterprise-grade responsiveness  
+- **Responsive layout** - Mobile-first, professional responsiveness  
 - **Accessibility** - WCAG 2.1 AA compliant interface elements
 - **Performance** - Optimized for fast loading and smooth interactions
 

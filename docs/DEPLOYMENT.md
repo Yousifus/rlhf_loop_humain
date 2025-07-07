@@ -1,15 +1,15 @@
 # 🚀 Deployment Guide - RLHF Loop System
 
-*Enterprise-grade deployment instructions for production environments*
+*Deployment instructions for the RLHF Loop System*
 
 ---
 
 ## 📋 **Prerequisites**
 
 ### 🖥️ **System Requirements**
-- **CPU:** 4+ cores, 2.5GHz minimum (8+ cores recommended)
-- **Memory:** 8GB RAM minimum (16GB+ for production)
-- **Storage:** 50GB+ free space (SSD recommended)
+- **CPU:** 4+ cores, 2.5GHz minimum
+- **Memory:** 8GB RAM minimum (16GB+ recommended)
+- **Storage:** 20GB+ free space
 - **OS:** Windows 10+, macOS 10.15+, or Ubuntu 20.04+
 
 ### 🐍 **Software Dependencies**
@@ -69,7 +69,7 @@ RUN pip install -r requirements.txt
 COPY . .
 EXPOSE 8501
 
-CMD ["streamlit", "run", "scripts/run_enhanced_dashboard_v2.py"]
+CMD ["streamlit", "run", "scripts/run_dashboard.py"]
 ```
 
 ### 🚀 **Docker Commands**
@@ -374,8 +374,8 @@ cp -r backup/config/* config/
 
 <div align="center">
 
-## 🌟 **Ready for Enterprise Production** 🌟
+## 🌟 **Ready for Deployment** 🌟
 
-*Comprehensive deployment guide for mission-critical applications*
+*Comprehensive deployment guide for RLHF systems*
 
 </div> 
