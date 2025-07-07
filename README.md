@@ -107,10 +107,10 @@ rlhf_loop_humain/
 - **📈 NumPy/Pandas** - Data processing & analysis
 
 ### 🎛️ **Dashboard & Visualization** 
-- **🎨 Streamlit** - Web interface with HUMAIN styling
+- **🎨 Streamlit** - Web interface
 - **📊 Plotly** - Interactive data visualization
 - **🎯 Matplotlib** - Statistical plotting
-- **🎨 Custom CSS** - HUMAIN OS design system
+- **🎨 Custom CSS** - Clean styling
 
 ### 🚀 **Development Tools**
 - **🐍 Python 3.8+** - Core runtime environment
@@ -151,7 +151,7 @@ The dashboard explores the RLHF pipeline lifecycle:
 - **Health Checks** - System validation
 - **Performance Tracking** - Basic metrics collection
 
-
+**Styling:** Clean interface with teal color scheme and responsive design.
 
 ---
 
@@ -177,7 +177,7 @@ This is a learning project with working components:
 
 | Component | Status | Description |
 |-----------|---------|-------------|
-| 📱 **Dashboard Interface** | ✅ Working | 4-phase monitoring interface with HUMAIN styling |
+| 📱 **Dashboard Interface** | ✅ Working | 4-phase monitoring interface |
 | 🗄️ **Data Management** | ✅ Basic | File-based data storage and loading |
 | 🤖 **API Integration** | ✅ Working | DeepSeek/OpenAI API connections |
 | 📊 **Visualizations** | ✅ Basic | Charts and metrics display |
