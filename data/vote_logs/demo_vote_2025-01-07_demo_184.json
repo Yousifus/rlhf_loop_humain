@@ -1,0 +1,27 @@
+{
+  "id": "demo_184",
+  "prompt": "Write a Python decorator for function timing",
+  "completions": [
+    "Here's a comprehensive solution with error handling:\n\n```python\n# Advanced implementation\n```\n\nThis approach uses best practices and optimization",
+    "Here's a basic implementation:\n\n```python\n# Efficient solution\n```"
+  ],
+  "chosen_index": 1,
+  "confidence": 0.482906223791683,
+  "annotation": "User preferred response B - cleaner implementation",
+  "generation_metadata": {
+    "temperature": 0.5,
+    "max_tokens": 272,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 39,
+      "completion_tokens": 147,
+      "total_tokens": 413
+    },
+    "cost": 0.000258,
+    "timestamp": "2025-01-07T23:41:00",
+    "category": "programming",
+    "subcategory": "python",
+    "difficulty": "medium"
+  },
+  "timestamp": "2025-01-07T23:41:00"
+}

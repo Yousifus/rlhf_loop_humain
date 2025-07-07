@@ -1,0 +1,27 @@
+{
+  "id": "demo_153",
+  "prompt": "How do recommendation systems work?",
+  "completions": [
+    "The complex concept involves nuanced interactions. Key considerations include: 1) technical depth, 2) ethical considerations, 3) long-term implications. Far-reaching consequences include...",
+    "The concept is involves key principles. Applications span multiple domains"
+  ],
+  "chosen_index": 0,
+  "confidence": 0.8552087269258796,
+  "annotation": "User preferred response A - better examples provided",
+  "generation_metadata": {
+    "temperature": 0.6,
+    "max_tokens": 308,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 97,
+      "completion_tokens": 209,
+      "total_tokens": 291
+    },
+    "cost": 0.000287,
+    "timestamp": "2025-01-07T23:46:00",
+    "category": "ai_ml",
+    "subcategory": "applications",
+    "difficulty": "medium"
+  },
+  "timestamp": "2025-01-07T23:46:00"
+}

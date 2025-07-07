@@ -1,0 +1,27 @@
+{
+  "id": "demo_340",
+  "prompt": "Implement OAuth 2.0 authentication flow",
+  "completions": [
+    "Here's a comprehensive solution with error handling:\n\n```python\n# Advanced implementation\n```\n\nThis approach uses best practices and optimization",
+    "Here's a basic implementation:\n\n```python\n# Efficient solution\n```"
+  ],
+  "chosen_index": 0,
+  "confidence": 0.52925047660279,
+  "annotation": "User preferred response A - more comprehensive solution",
+  "generation_metadata": {
+    "temperature": 0.72,
+    "max_tokens": 309,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 48,
+      "completion_tokens": 89,
+      "total_tokens": 302
+    },
+    "cost": 0.000508,
+    "timestamp": "2025-01-07T23:51:00",
+    "category": "programming",
+    "subcategory": "security",
+    "difficulty": "hard"
+  },
+  "timestamp": "2025-01-07T23:51:00"
+}

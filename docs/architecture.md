@@ -22,7 +22,7 @@ graph TD
     end
     
     subgraph "Visualization & Analysis"
-        H --> I[Attunement Dashboard]
+        H --> I[RLHF Pipeline Monitor]
         D --> I
         E --> I
         C --> I
@@ -143,7 +143,7 @@ graph TD
     INTERFACE --> I2[rlhf_loop.py]
     INTERFACE --> I3[eval_probe.py]
     INTERFACE --> I4[run_drift_analysis.py]
-    INTERFACE --> I5[attunement_dashboard.py]
+    INTERFACE --> I5[scripts/run_dashboard.py]
     
     MODELS --> M1[vote_predictor_checkpoint/]
     MODELS --> M2[meta_reflection_log.jsonl]

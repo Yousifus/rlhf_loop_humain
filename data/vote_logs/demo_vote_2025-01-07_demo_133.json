@@ -1,0 +1,27 @@
+{
+  "id": "demo_133",
+  "prompt": "How do we balance innovation with AI safety?",
+  "completions": [
+    "This is a complex issue requiring balanced approach: multiple stakeholder interests vs competing priorities. Requires careful balance and ongoing evaluation",
+    "It depends because context matters. However, implementation challenges exist."
+  ],
+  "chosen_index": 0,
+  "confidence": 0.5445297415160013,
+  "annotation": "User preferred response A - nuanced analysis",
+  "generation_metadata": {
+    "temperature": 0.79,
+    "max_tokens": 153,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 73,
+      "completion_tokens": 231,
+      "total_tokens": 400
+    },
+    "cost": 0.000572,
+    "timestamp": "2025-01-07T23:41:00",
+    "category": "ethics",
+    "subcategory": "policy",
+    "difficulty": "hard"
+  },
+  "timestamp": "2025-01-07T23:41:00"
+}

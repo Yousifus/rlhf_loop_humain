@@ -1,0 +1,27 @@
+{
+  "id": "demo_404",
+  "prompt": "Write a poem about the beauty of code",
+  "completions": [
+    "Once upon a time things happened The end.",
+    "In a world where technology... characters faced complex challenges... ...leading to profound insights"
+  ],
+  "chosen_index": 1,
+  "confidence": 0.5486161205089817,
+  "annotation": "User preferred response B - more meaningful conclusion",
+  "generation_metadata": {
+    "temperature": 0.85,
+    "max_tokens": 256,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 118,
+      "completion_tokens": 323,
+      "total_tokens": 464
+    },
+    "cost": 0.000189,
+    "timestamp": "2025-01-07T23:40:00",
+    "category": "creative",
+    "subcategory": "poetry",
+    "difficulty": "easy"
+  },
+  "timestamp": "2025-01-07T23:40:00"
+}

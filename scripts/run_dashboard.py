@@ -57,7 +57,12 @@ from interface.ux_improvements import (
     calculate_connection_depth,
     calculate_learning_progress,
     calculate_engagement_level,
-    calculate_sync_rate
+    calculate_sync_rate,
+    create_error_handler,
+    create_loading_animation,
+    create_accessibility_features,
+    create_mobile_optimizations,
+    create_performance_optimizations
 )
 
 # Import visualization components
@@ -85,6 +90,14 @@ def main():
     
     # Apply HUMAIN OS styling
     apply_humain_styling()
+    
+    # Initialize performance optimizations
+    create_mobile_optimizations()
+    create_accessibility_features()
+    load_heavy_data, paginate_df = create_performance_optimizations()
+    
+    # Get error handler
+    handle_error = create_error_handler()
     
     # Initialize session state
     initialize_pipeline_session_state()
@@ -160,7 +173,7 @@ def main():
         update_model_config_from_data(model_config, vote_df, predictions_df, reflections_df)
         
     except Exception as e:
-        st.error(f"Error loading pipeline data: {str(e)}")
+        handle_error(f"Error loading pipeline data: {str(e)}", "error")
         vote_df = pd.DataFrame()
         predictions_df = pd.DataFrame()
         reflections_df = pd.DataFrame()
@@ -500,7 +513,7 @@ def should_refresh_data():
     """Smart data refresh logic for pipeline monitoring"""
     if 'vote_df' not in st.session_state:
         return True
-    
+
     if st.session_state.auto_refresh:
         time_since_refresh = time.time() - st.session_state.last_data_refresh
         return time_since_refresh > AUTO_REFRESH_INTERVAL
@@ -534,6 +547,9 @@ def update_model_config_from_data(model_config, vote_df, predictions_df, reflect
 def display_pipeline_content(selected_section, vote_df, predictions_df, reflections_df, data_summary):
     """Display content based on selected pipeline section"""
     
+    # Get error handler
+    handle_error = create_error_handler()
+    
     try:
         if selected_section == "system_overview":
             st.markdown("## ⚡ System Overview")
@@ -551,7 +567,10 @@ def display_pipeline_content(selected_section, vote_df, predictions_df, reflecti
             
         elif selected_section == "dataset_stats":
             st.markdown("## 📊 Dataset Statistics")
-            display_annotation_history(vote_df, predictions_df)
+            # Use pagination for better performance with large datasets
+            _, paginate_df = create_performance_optimizations()
+            paginated_vote_df = paginate_df(vote_df)
+            display_annotation_history(paginated_vote_df, predictions_df)
             
         elif selected_section == "data_quality":
             st.markdown("## 📈 Data Quality Metrics")
@@ -680,7 +699,7 @@ def display_pipeline_content(selected_section, vote_df, predictions_df, reflecti
             st.info("This pipeline feature is currently being developed.")
             
     except Exception as e:
-        st.error(f"Error displaying pipeline content: {str(e)}")
+        handle_error(f"Error displaying pipeline content: {str(e)}", "error")
 
 def create_connection_timeline(vote_df):
     """Create an interactive timeline of model performance"""
@@ -893,4 +912,4 @@ def create_system_footer():
     """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
-    main() 
+    main()

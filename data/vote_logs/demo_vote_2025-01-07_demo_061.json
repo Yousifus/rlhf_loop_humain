@@ -1,0 +1,27 @@
+{
+  "id": "demo_061",
+  "prompt": "Create a CI/CD pipeline using GitHub Actions",
+  "completions": [
+    "Here's a comprehensive solution with error handling:\n\n```python\n# Advanced implementation\n```\n\nThis approach uses best practices and optimization",
+    "Here's a basic implementation:\n\n```python\n# Efficient solution\n```"
+  ],
+  "chosen_index": 0,
+  "confidence": 0.5332283851983974,
+  "annotation": "User preferred response A - cleaner implementation",
+  "generation_metadata": {
+    "temperature": 0.75,
+    "max_tokens": 210,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 110,
+      "completion_tokens": 227,
+      "total_tokens": 226
+    },
+    "cost": 0.000623,
+    "timestamp": "2025-01-07T23:41:00",
+    "category": "programming",
+    "subcategory": "devops",
+    "difficulty": "medium"
+  },
+  "timestamp": "2025-01-07T23:41:00"
+}

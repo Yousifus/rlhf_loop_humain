@@ -1,0 +1,27 @@
+{
+  "id": "demo_400",
+  "prompt": "Optimize this SQL query for better performance",
+  "completions": [
+    "Here's a comprehensive solution with error handling:\n\n```python\n# Advanced implementation\n```\n\nThis approach uses best practices and optimization",
+    "Here's a basic implementation:\n\n```python\n# Efficient solution\n```"
+  ],
+  "chosen_index": 0,
+  "confidence": 0.7856537311408662,
+  "annotation": "User preferred response A - includes best practices",
+  "generation_metadata": {
+    "temperature": 0.56,
+    "max_tokens": 298,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 59,
+      "completion_tokens": 116,
+      "total_tokens": 128
+    },
+    "cost": 0.000615,
+    "timestamp": "2025-01-07T23:46:00",
+    "category": "programming",
+    "subcategory": "database",
+    "difficulty": "hard"
+  },
+  "timestamp": "2025-01-07T23:46:00"
+}

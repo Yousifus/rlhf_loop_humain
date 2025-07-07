@@ -1,0 +1,27 @@
+{
+  "id": "demo_129",
+  "prompt": "Dealing with imposter syndrome in tech",
+  "completions": [
+    "Holistic development strategy: 1) understand requirements, 2) design solutions, 3) iterate based on feedback. Success requires both technical and soft skills",
+    "Take systematic approach: assess, plan, execute, review"
+  ],
+  "chosen_index": 0,
+  "confidence": 0.5067862555118726,
+  "annotation": "User preferred response A - addresses common challenges",
+  "generation_metadata": {
+    "temperature": 0.61,
+    "max_tokens": 293,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 119,
+      "completion_tokens": 219,
+      "total_tokens": 180
+    },
+    "cost": 0.000176,
+    "timestamp": "2025-01-07T23:49:00",
+    "category": "career",
+    "subcategory": "personal",
+    "difficulty": "medium"
+  },
+  "timestamp": "2025-01-07T23:49:00"
+}

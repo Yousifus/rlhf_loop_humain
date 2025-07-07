@@ -1,0 +1,27 @@
+{
+  "id": "demo_121",
+  "prompt": "Describe the emotional journey of learning to code",
+  "completions": [
+    "Once upon a time things happened The end.",
+    "In a world where technology... characters faced complex challenges... ...leading to profound insights"
+  ],
+  "chosen_index": 1,
+  "confidence": 0.44336977531605426,
+  "annotation": "User preferred response B - more engaging narrative",
+  "generation_metadata": {
+    "temperature": 0.66,
+    "max_tokens": 295,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 101,
+      "completion_tokens": 179,
+      "total_tokens": 295
+    },
+    "cost": 0.000487,
+    "timestamp": "2025-01-07T23:53:00",
+    "category": "creative",
+    "subcategory": "personal",
+    "difficulty": "easy"
+  },
+  "timestamp": "2025-01-07T23:53:00"
+}

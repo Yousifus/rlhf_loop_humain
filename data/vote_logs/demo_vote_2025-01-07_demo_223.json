@@ -1,0 +1,27 @@
+{
+  "id": "demo_223",
+  "prompt": "Create a dialogue between a human and sentient AI",
+  "completions": [
+    "The narrative begins with intricate worldbuilding... layered character development and thematic exploration... ...culminating in thought-provoking resolution",
+    "The story unfolds with meaningful progression toward satisfying resolution"
+  ],
+  "chosen_index": 0,
+  "confidence": 0.7127852156780587,
+  "annotation": "User preferred response A - more meaningful conclusion",
+  "generation_metadata": {
+    "temperature": 0.74,
+    "max_tokens": 350,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 83,
+      "completion_tokens": 137,
+      "total_tokens": 322
+    },
+    "cost": 0.000205,
+    "timestamp": "2025-01-07T23:58:00",
+    "category": "creative",
+    "subcategory": "dialogue",
+    "difficulty": "medium"
+  },
+  "timestamp": "2025-01-07T23:58:00"
+}

@@ -1,0 +1,117 @@
+{
+  "timestamp": "2025-07-08T01:05:50.141511",
+  "method": "temperature_scaling",
+  "parameters": {
+    "temperature": 1.085,
+    "validation_samples": 144
+  },
+  "metrics": {
+    "pre_calibration": {
+      "ece": 0.25,
+      "log_loss": 0.65,
+      "brier_score": 0.25
+    },
+    "post_calibration": {
+      "ece": 0.08,
+      "log_loss": 0.35,
+      "brier_score": 0.18
+    },
+    "improvement": {
+      "ece": 0.17,
+      "log_loss": 0.3,
+      "brier_score": 0.07
+    }
+  },
+  "history": [
+    {
+      "timestamp": "2024-08-15T00:00:00",
+      "sample_count": 97,
+      "accuracy": 0.605,
+      "calibration_error": 0.1408,
+      "avg_confidence_before": 0.84,
+      "avg_confidence_after": 0.648,
+      "temperature": 1.235,
+      "notes": "Calibration session 1 - Initial calibration"
+    },
+    {
+      "timestamp": "2024-09-05T00:00:00",
+      "sample_count": 139,
+      "accuracy": 0.643,
+      "calibration_error": 0.127,
+      "avg_confidence_before": 0.855,
+      "avg_confidence_after": 0.682,
+      "temperature": 1.212,
+      "notes": "Calibration session 2 - Initial calibration"
+    },
+    {
+      "timestamp": "2024-09-20T00:00:00",
+      "sample_count": 138,
+      "accuracy": 0.671,
+      "calibration_error": 0.1172,
+      "avg_confidence_before": 0.866,
+      "avg_confidence_after": 0.706,
+      "temperature": 1.195,
+      "notes": "Calibration session 3 - Initial calibration"
+    },
+    {
+      "timestamp": "2024-10-10T00:00:00",
+      "sample_count": 115,
+      "accuracy": 0.707,
+      "calibration_error": 0.1041,
+      "avg_confidence_before": 0.88,
+      "avg_confidence_after": 0.738,
+      "temperature": 1.173,
+      "notes": "Calibration session 4 - Good improvement"
+    },
+    {
+      "timestamp": "2024-10-24T00:00:00",
+      "sample_count": 81,
+      "accuracy": 0.732,
+      "calibration_error": 0.0949,
+      "avg_confidence_before": 0.89,
+      "avg_confidence_after": 0.761,
+      "temperature": 1.158,
+      "notes": "Calibration session 5 - Good improvement"
+    },
+    {
+      "timestamp": "2024-11-11T00:00:00",
+      "sample_count": 100,
+      "accuracy": 0.765,
+      "calibration_error": 0.0831,
+      "avg_confidence_before": 0.903,
+      "avg_confidence_after": 0.79,
+      "temperature": 1.138,
+      "notes": "Calibration session 6 - Good improvement"
+    },
+    {
+      "timestamp": "2024-11-25T00:00:00",
+      "sample_count": 125,
+      "accuracy": 0.79,
+      "calibration_error": 0.0739,
+      "avg_confidence_before": 0.913,
+      "avg_confidence_after": 0.812,
+      "temperature": 1.123,
+      "notes": "Calibration session 7 - Good improvement"
+    },
+    {
+      "timestamp": "2024-12-16T00:00:00",
+      "sample_count": 144,
+      "accuracy": 0.828,
+      "calibration_error": 0.0601,
+      "avg_confidence_before": 0.928,
+      "avg_confidence_after": 0.846,
+      "temperature": 1.1,
+      "notes": "Calibration session 8 - Good improvement"
+    },
+    {
+      "timestamp": "2024-12-30T00:00:00",
+      "sample_count": 144,
+      "accuracy": 0.854,
+      "calibration_error": 0.0509,
+      "avg_confidence_before": 0.939,
+      "avg_confidence_after": 0.869,
+      "temperature": 1.085,
+      "notes": "Calibration session 9 - Good improvement"
+    }
+  ]
+}

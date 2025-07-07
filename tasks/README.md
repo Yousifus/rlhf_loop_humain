@@ -59,7 +59,7 @@ graph TD
 
 ## RLHF Dashboard Implementation Details
 
-Tasks 11-19 focus on implementing the RLHF Attunement Dashboard components, which have been successfully completed:
+Tasks 11-19 focus on implementing the RLHF Pipeline Monitor components, which have been successfully completed and consolidated into scripts/run_dashboard.py:
 
 ```mermaid
 graph TD

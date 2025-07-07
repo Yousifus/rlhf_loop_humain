@@ -1,0 +1,27 @@
+{
+  "id": "demo_200",
+  "prompt": "How do we measure AI system performance?",
+  "completions": [
+    "The complex concept involves nuanced interactions. Key considerations include: 1) technical depth, 2) ethical considerations, 3) long-term implications. Far-reaching consequences include...",
+    "The concept is involves key principles. Applications span multiple domains"
+  ],
+  "chosen_index": 1,
+  "confidence": 0.5300892908026181,
+  "annotation": "User preferred response B - covers important nuances",
+  "generation_metadata": {
+    "temperature": 0.87,
+    "max_tokens": 250,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 119,
+      "completion_tokens": 247,
+      "total_tokens": 272
+    },
+    "cost": 0.000417,
+    "timestamp": "2025-01-07T23:52:00",
+    "category": "ai_ml",
+    "subcategory": "evaluation",
+    "difficulty": "medium"
+  },
+  "timestamp": "2025-01-07T23:52:00"
+}

@@ -1,0 +1,27 @@
+{
+  "id": "demo_079",
+  "prompt": "Explain the bias-variance tradeoff in machine learning",
+  "completions": [
+    "The complex concept involves nuanced interactions. Key considerations include: 1) technical depth, 2) ethical considerations, 3) long-term implications. Far-reaching consequences include...",
+    "The concept is involves key principles. Applications span multiple domains"
+  ],
+  "chosen_index": 1,
+  "confidence": 0.5833191466829318,
+  "annotation": "User preferred response B - more accessible language",
+  "generation_metadata": {
+    "temperature": 0.85,
+    "max_tokens": 334,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 36,
+      "completion_tokens": 227,
+      "total_tokens": 417
+    },
+    "cost": 0.000319,
+    "timestamp": "2025-01-07T23:47:00",
+    "category": "ai_ml",
+    "subcategory": "theory",
+    "difficulty": "medium"
+  },
+  "timestamp": "2025-01-07T23:47:00"
+}

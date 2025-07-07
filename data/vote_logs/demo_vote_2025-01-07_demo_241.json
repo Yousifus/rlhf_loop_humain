@@ -1,0 +1,27 @@
+{
+  "id": "demo_241",
+  "prompt": "The future of work in a post-pandemic world",
+  "completions": [
+    "Here's a comprehensive solution with error handling:\n\n```python\n# Advanced implementation\n```\n\nThis approach uses best practices and optimization",
+    "Here's a basic implementation:\n\n```python\n# Efficient solution\n```"
+  ],
+  "chosen_index": 0,
+  "confidence": 0.672430045815644,
+  "annotation": "User preferred response A - better error handling",
+  "generation_metadata": {
+    "temperature": 0.79,
+    "max_tokens": 183,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 57,
+      "completion_tokens": 91,
+      "total_tokens": 411
+    },
+    "cost": 0.000453,
+    "timestamp": "2025-01-07T23:43:00",
+    "category": "current_events",
+    "subcategory": "future_work",
+    "difficulty": "medium"
+  },
+  "timestamp": "2025-01-07T23:43:00"
+}

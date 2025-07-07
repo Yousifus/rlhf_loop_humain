@@ -1,0 +1,12 @@
+{
+  "version": "v3",
+  "timestamp": "2024-12-29T00:00:00",
+  "accuracy": 0.852,
+  "calibration_error": 0.0625,
+  "training_samples": 1964,
+  "notes": "Major architecture improvements and calibration",
+  "model_size": "7B",
+  "training_time_hours": 29,
+  "confidence_avg": 0.868,
+  "loss": 0.762
+}

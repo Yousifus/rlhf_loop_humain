@@ -1,0 +1,27 @@
+{
+  "id": "demo_137",
+  "prompt": "Explain the difference between AI, ML, and Deep Learning",
+  "completions": [
+    "The concept is straightforward. Common uses include...",
+    "The concept involves multiple interconnected factors. Key considerations include: 1) accuracy, 2) fairness, 3) scalability. This affects..."
+  ],
+  "chosen_index": 0,
+  "confidence": 0.49343760097277556,
+  "annotation": "User preferred response A - more detailed explanation",
+  "generation_metadata": {
+    "temperature": 0.52,
+    "max_tokens": 290,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 94,
+      "completion_tokens": 183,
+      "total_tokens": 403
+    },
+    "cost": 0.000476,
+    "timestamp": "2025-01-07T23:52:00",
+    "category": "ai_ml",
+    "subcategory": "education",
+    "difficulty": "easy"
+  },
+  "timestamp": "2025-01-07T23:52:00"
+}

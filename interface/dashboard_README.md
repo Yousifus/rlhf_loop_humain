@@ -1,6 +1,6 @@
-# RLHF Attunement Dashboard
+# RLHF Pipeline Monitor
 
-The Attunement Dashboard provides real-time visualization and analysis of the RLHF system's performance, alignment metrics, and calibration quality.
+The RLHF Pipeline Monitor provides comprehensive monitoring and analysis across the complete RLHF lifecycle, from data collection through deployment.
 
 ## Features
 
@@ -28,7 +28,7 @@ To launch the dashboard, run:
 
 ```bash
 cd /path/to/project
-streamlit run interface/attunement_dashboard.py
+streamlit run scripts/run_dashboard.py
 ```
 
 The dashboard will be available at http://localhost:8501 by default.
@@ -68,11 +68,14 @@ If you see CORS-related errors in the browser console related to "webhooks.fivet
 
 To completely disable Streamlit telemetry and resolve these errors, you can use one of these methods:
 
-1. Use the provided `run_dashboard.py` script which already disables telemetry
+1. Use the main dashboard script which already disables telemetry:
+   ```bash
+   streamlit run scripts/run_dashboard.py
+   ```
 2. Set environment variables before running Streamlit:
    ```bash
    set STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
-   streamlit run interface/attunement_dashboard.py
+   streamlit run scripts/run_dashboard.py
    ```
 3. Create a `.streamlit/config.toml` file in your project root with:
    ```toml
@@ -81,7 +84,7 @@ To completely disable Streamlit telemetry and resolve these errors, you can use 
    ```
 4. Use command line flags:
    ```bash
-   streamlit run interface/attunement_dashboard.py --browser.gatherUsageStats=false
+   streamlit run scripts/run_dashboard.py --browser.gatherUsageStats=false
    ```
 
 If you still see the errors, try clearing your browser cache or restarting your browser.

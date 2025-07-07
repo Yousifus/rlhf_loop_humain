@@ -1,6 +1,6 @@
 # Setting Up DeepSeek API for the RLHF Dashboard
 
-This guide will help you obtain a DeepSeek API key and set it up for use with the RLHF Attunement Dashboard.
+This guide will help you obtain a DeepSeek API key and set it up for use with the RLHF Pipeline Monitor.
 
 ## Getting a DeepSeek API Key
 

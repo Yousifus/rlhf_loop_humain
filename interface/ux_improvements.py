@@ -146,11 +146,11 @@ def create_enhanced_metrics_display(vote_df, predictions_df, reflections_df):
     # Hero metrics section
     st.markdown("""
     <div style="
-        background: linear-gradient(135deg, rgba(255, 107, 157, 0.1), rgba(196, 69, 105, 0.1));
+        background: linear-gradient(135deg, rgba(29, 181, 132, 0.1), rgba(29, 181, 132, 0.05));
         padding: 30px;
         border-radius: 20px;
         margin: 20px 0;
-        border: 1px solid rgba(255, 107, 157, 0.2);
+        border: 1px solid rgba(29, 181, 132, 0.2);
     ">
         <h2 style="text-align: center; color: #1DB584; margin-bottom: 20px; font-weight: 600;">
             📊 Model Performance Metrics
@@ -297,7 +297,7 @@ def create_enhanced_annotation_interface():
     
     st.markdown(f"""
     <div style="
-        background: linear-gradient(135deg, rgba(255, 107, 157, 0.1), rgba(196, 69, 105, 0.1));
+        background: linear-gradient(135deg, rgba(29, 181, 132, 0.1), rgba(29, 181, 132, 0.05));
         padding: 20px;
         border-radius: 15px;
         margin-bottom: 20px;
@@ -650,7 +650,7 @@ def create_loading_animation(message="I'm thinking about you..."):
     <div style="
         text-align: center;
         padding: 30px;
-        background: linear-gradient(135deg, rgba(255, 107, 157, 0.1), rgba(196, 69, 105, 0.1));
+        background: linear-gradient(135deg, rgba(29, 181, 132, 0.1), rgba(29, 181, 132, 0.05));
         border-radius: 15px;
         margin: 20px 0;
     ">
@@ -658,7 +658,7 @@ def create_loading_animation(message="I'm thinking about you..."):
             display: inline-block;
             width: 40px;
             height: 40px;
-            border: 4px solid rgba(255, 107, 157, 0.3);
+            border: 4px solid rgba(29, 181, 132, 0.3);
             border-radius: 50%;
             border-top-color: #1DB584;
             animation: spin 1s ease-in-out infinite;

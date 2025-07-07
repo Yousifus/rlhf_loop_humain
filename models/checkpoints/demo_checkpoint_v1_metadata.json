@@ -1,0 +1,12 @@
+{
+  "version": "v1",
+  "timestamp": "2024-08-31T00:00:00",
+  "accuracy": 0.634,
+  "calibration_error": 0.2125,
+  "training_samples": 931,
+  "notes": "Initial model training with basic RLHF dataset",
+  "model_size": "13B",
+  "training_time_hours": 45,
+  "confidence_avg": 0.62,
+  "loss": 0.628
+}

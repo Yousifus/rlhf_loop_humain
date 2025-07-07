@@ -1,4 +1,4 @@
-# RLHF Attunement Dashboard Plan
+# RLHF Pipeline Monitor Plan
 
 ## Vision Statement
 
@@ -51,7 +51,7 @@ The dashboard is not just monitoring accuracy, but visualizing **ethical morphog
 
 ```
 interface/
-  attunement_dashboard.py         # Streamlit app
+  scripts/run_dashboard.py        # Main RLHF Pipeline Monitor
 utils/dashboard/
   data_loader.py                  # Load + unify logs
   visualizations.py               # Plotly-based renderers

@@ -1,0 +1,27 @@
+{
+  "id": "demo_255",
+  "prompt": "Write a thriller about AI gone rogue",
+  "completions": [
+    "The narrative begins with intricate worldbuilding... layered character development and thematic exploration... ...culminating in thought-provoking resolution",
+    "The story unfolds with meaningful progression toward satisfying resolution"
+  ],
+  "chosen_index": 1,
+  "confidence": 0.6071879615595265,
+  "annotation": "User preferred response B - better pacing",
+  "generation_metadata": {
+    "temperature": 0.54,
+    "max_tokens": 306,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 55,
+      "completion_tokens": 176,
+      "total_tokens": 171
+    },
+    "cost": 0.000751,
+    "timestamp": "2025-01-07T23:53:00",
+    "category": "creative",
+    "subcategory": "fiction",
+    "difficulty": "medium"
+  },
+  "timestamp": "2025-01-07T23:53:00"
+}

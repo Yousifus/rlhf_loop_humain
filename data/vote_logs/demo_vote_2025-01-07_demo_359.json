@@ -1,0 +1,27 @@
+{
+  "id": "demo_359",
+  "prompt": "Compare supervised vs unsupervised learning",
+  "completions": [
+    "The concept is straightforward. Common uses include...",
+    "The concept involves multiple interconnected factors. Key considerations include: 1) accuracy, 2) fairness, 3) scalability. This affects..."
+  ],
+  "chosen_index": 1,
+  "confidence": 0.6152657296572209,
+  "annotation": "User preferred response B - more accessible language",
+  "generation_metadata": {
+    "temperature": 0.71,
+    "max_tokens": 328,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 56,
+      "completion_tokens": 109,
+      "total_tokens": 165
+    },
+    "cost": 0.0005,
+    "timestamp": "2025-01-07T23:57:00",
+    "category": "ai_ml",
+    "subcategory": "concepts",
+    "difficulty": "easy"
+  },
+  "timestamp": "2025-01-07T23:57:00"
+}

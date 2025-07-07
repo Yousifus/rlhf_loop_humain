@@ -1,0 +1,27 @@
+{
+  "id": "demo_308",
+  "prompt": "How to stay current with rapidly changing technology?",
+  "completions": [
+    "Holistic development strategy: 1) understand requirements, 2) design solutions, 3) iterate based on feedback. Success requires both technical and soft skills",
+    "Take systematic approach: assess, plan, execute, review"
+  ],
+  "chosen_index": 1,
+  "confidence": 0.3793984692919673,
+  "annotation": "User preferred response B - addresses common challenges",
+  "generation_metadata": {
+    "temperature": 0.76,
+    "max_tokens": 287,
+    "model": "deepseek-chat",
+    "tokens": {
+      "prompt_tokens": 52,
+      "completion_tokens": 225,
+      "total_tokens": 291
+    },
+    "cost": 0.000328,
+    "timestamp": "2025-01-07T23:59:00",
+    "category": "career",
+    "subcategory": "learning",
+    "difficulty": "medium"
+  },
+  "timestamp": "2025-01-07T23:59:00"
+}
