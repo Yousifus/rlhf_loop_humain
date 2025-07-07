@@ -1,0 +1,21 @@
+{
+  "prompt_id": "prompt_974a2a99",
+  "prompt": "one word answer only, deepseek or mistral? whos better?",
+  "preference": "Completion B",
+  "timestamp": "2025-07-07T21:30:57.709662",
+  "selected_completion": "Deepseek",
+  "rejected_completion": "Deepseek",
+  "feedback": "User preferred response B",
+  "quality_metrics": {
+    "temperature": 0.7,
+    "max_tokens": 50,
+    "model": "deepseek-chat",
+    "cost": 2.2e-05
+  },
+  "annotation_version": "3.0",
+  "annotation_id": "ann_cb86545b",
+  "is_binary_preference": true,
+  "model_prediction": "ERROR",
+  "model_correct": null,
+  "confidence": null
+}

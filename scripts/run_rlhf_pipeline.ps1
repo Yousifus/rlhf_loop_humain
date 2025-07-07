@@ -18,7 +18,7 @@ Write-Host $dataProcessOutput
 
 # Step 2: Train the reward model
 Write-Host "Step 2: Training reward model from annotations..." -ForegroundColor Yellow
-$trainingOutput = python train_reward_model.py --dry-run 2>&1
+$trainingOutput = python scripts/train_reward_model.py --dry-run 2>&1
 Write-Host $trainingOutput
 
 # Step 3: Display statistics
@@ -49,7 +49,7 @@ $runDashboard = Read-Host "Run dashboard? (y/n)"
 
 if ($runDashboard -eq "y" -or $runDashboard -eq "Y") {
     Write-Host "Starting RLHF Dashboard with DeepSeek API integration..." -ForegroundColor Green
-    python run_dashboard.py
+    streamlit run scripts/run_dashboard.py
 }
 
 # Clean up environment variables when done

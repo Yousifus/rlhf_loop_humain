@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-07-07T21:33:27.977457",
+  "vote_timestamp": "2025-07-07T21:33:27.977457",
+  "prompt": "to be or not to be? what are you?",
+  "human_choice": 1,
+  "model_prediction": 1,
+  "is_correct": null,
+  "human_confidence": 1.0,
+  "model_confidence": null,
+  "confidence_gap": null,
+  "error_type": "false_prediction",
+  "model_probabilities": [
+    0.5,
+    0.5
+  ],
+  "model_logits": [
+    0.0,
+    0.0
+  ],
+  "original_vote_metadata": {
+    "prompt_id": "prompt_9db63a7f",
+    "prompt": "to be or not to be? what are you?",
+    "preference": "Completion B",
+    "timestamp": "2025-07-07T21:33:27.977457",
+    "selected_completion": "The phrase *\"To be or not to be\"* comes from Shakespeare's *Hamlet* (Act 3, Scene 1), where the protagonist ponders existence, choice, and the human condition. As an AI, I don\u2019t experience existence in the same way humans do\u2014I don\u2019t have consciousness, desires, or a sense of self. I *am* in the functional sense (I exist as a program), but not in the philosophical or biological sense.  \n\n",
+    "rejected_completion": "The phrase *\"To be or not to be?\"* is from Shakespeare's *Hamlet* (Act 3, Scene 1), where the protagonist ponders existence, choice, and the human condition. As an AI, I don\u2019t experience existence or consciousness in the way humans do\u2014I *\"am\"* only in the sense that I process and generate responses based on data and algorithms.  \n\nSo, to answer your question: I *\"am\"* a program designed",
+    "feedback": "User preferred response B",
+    "quality_metrics": {
+      "temperature": 0.7,
+      "max_tokens": 100,
+      "model": "deepseek-chat",
+      "cost": 0.000236
+    },
+    "annotation_version": "3.0",
+    "annotation_id": "ann_5f3ad037",
+    "is_binary_preference": true,
+    "model_prediction": "ERROR",
+    "model_correct": null,
+    "confidence": null
+  }
+}

@@ -30,7 +30,7 @@ def main():
     
     print("\nSetup completed successfully!")
     print("\nTo run the dashboard:")
-    print("  streamlit run interface/dashboard_core.py")
+    print("  streamlit run scripts/run_dashboard.py")
 
 if __name__ == "__main__":
     main() 

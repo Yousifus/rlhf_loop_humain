@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-07-07T21:32:50.506104",
+  "vote_timestamp": "2025-07-07T21:32:50.506104",
+  "prompt": "to be or not to be? what are you?",
+  "human_choice": 1,
+  "model_prediction": 1,
+  "is_correct": null,
+  "human_confidence": 1.0,
+  "model_confidence": null,
+  "confidence_gap": null,
+  "error_type": "false_prediction",
+  "model_probabilities": [
+    0.5,
+    0.5
+  ],
+  "model_logits": [
+    0.0,
+    0.0
+  ],
+  "original_vote_metadata": {
+    "prompt_id": "prompt_928f3c5a",
+    "prompt": "to be or not to be? what are you?",
+    "preference": "Completion B",
+    "timestamp": "2025-07-07T21:32:50.506104",
+    "selected_completion": "The phrase *\"To be or not to be?\"* is from Shakespeare's *Hamlet* (Act 3, Scene 1), where the protagonist ponders existence, choice, and the human condition. As an AI, I don\u2019",
+    "rejected_completion": "The phrase *\"To be or not to be\"* comes from Shakespeare's *Hamlet* (Act 3, Scene 1), where the prince contemplates existence, choice, and the human condition. As an AI, I don\u2019",
+    "feedback": "User preferred response B",
+    "quality_metrics": {
+      "temperature": 0.7,
+      "max_tokens": 50,
+      "model": "deepseek-chat",
+      "cost": 0.000126
+    },
+    "annotation_version": "3.0",
+    "annotation_id": "ann_6234a685",
+    "is_binary_preference": true,
+    "model_prediction": "ERROR",
+    "model_correct": null,
+    "confidence": null
+  }
+}

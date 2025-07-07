@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-07-07T21:27:00.061531",
+  "vote_timestamp": "2025-07-07T21:27:00.061531",
+  "prompt": "explain whats the difference between tyranny and oppression to a 5 year old",
+  "human_choice": 1,
+  "model_prediction": 1,
+  "is_correct": null,
+  "human_confidence": 1.0,
+  "model_confidence": null,
+  "confidence_gap": null,
+  "error_type": "false_prediction",
+  "model_probabilities": [
+    0.5,
+    0.5
+  ],
+  "model_logits": [
+    0.0,
+    0.0
+  ],
+  "original_vote_metadata": {
+    "prompt_id": "prompt_4a95d8f2",
+    "prompt": "explain whats the difference between tyranny and oppression to a 5 year old",
+    "preference": "Completion B",
+    "timestamp": "2025-07-07T21:27:00.061531",
+    "selected_completion": "Sure! Here's a simple way to explain it to a 5-year-old:  \n\n**Tyranny** is like having a really mean king or leader who makes all the rules and won\u2019t let anyone say no. If you don\u2019t do what they say, they might punish you\u2014like a bully who\u2019s in charge of everything.  \n\n**Oppression** is when someone (or a group) keeps hurting or being unfair to others over and over, making them feel sad or scared. It\u2019s like if a big kid keeps taking your toys every day and won\u2019t let you play.  \n\nSo, tyranny is about a *mean ruler*, and oppression is about *people being treated badly* for a long time. Both are unfair and make life hard for others.  \n\nWould you like me to explain it with a little story or example? \ud83d\ude0a",
+    "rejected_completion": "Sure! Here's a simple way to explain it to a 5-year-old:\n\n**Tyranny** is like when one big, mean kid makes *all* the rules and never lets anyone else have a turn or say what they want. They\u2019re the boss of everything, and no one can stop them.  \n\n**Oppression** is when someone (or a group) is *always* being treated unfairly\u2014like being left out, pushed around, or not allowed to do things others get to do, just because of who they are.  \n\nSo, tyranny is about a *mean boss* who controls everything, and oppression is about people being *hurt or left out* over and over.  \n\nWould you like me to explain it with a little story or example? \ud83d\ude0a",
+    "feedback": "User preferred response B",
+    "quality_metrics": {
+      "temperature": 0.7,
+      "max_tokens": 200,
+      "model": "deepseek-chat",
+      "cost": 0.00039
+    },
+    "annotation_version": "3.0",
+    "annotation_id": "ann_8b4f2dff",
+    "is_binary_preference": true,
+    "model_prediction": "ERROR",
+    "model_correct": null,
+    "confidence": null
+  }
+}

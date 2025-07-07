@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-07-07T21:28:34.540832",
+  "vote_timestamp": "2025-07-07T21:28:34.540832",
+  "prompt": "short answer only, deepseek or chatgpt? whos better?",
+  "human_choice": 1,
+  "model_prediction": 1,
+  "is_correct": null,
+  "human_confidence": 1.0,
+  "model_confidence": null,
+  "confidence_gap": null,
+  "error_type": "false_prediction",
+  "model_probabilities": [
+    0.5,
+    0.5
+  ],
+  "model_logits": [
+    0.0,
+    0.0
+  ],
+  "original_vote_metadata": {
+    "prompt_id": "prompt_fd1bc282",
+    "prompt": "short answer only, deepseek or chatgpt? whos better?",
+    "preference": "Completion B",
+    "timestamp": "2025-07-07T21:28:34.540832",
+    "selected_completion": "Both have strengths: **DeepSeek** excels in long-context (128K) and technical tasks, while **ChatGPT** (especially GPT-4) offers strong general reasoning and creativity. The best choice depends on your needs\u2014try both",
+    "rejected_completion": "Both are powerful AI models, but the \"better\" choice depends on your needs:  \n\n- **DeepSeek** excels in long-context understanding (up to 128K tokens), strong coding/math capabilities, and free access.  \n-",
+    "feedback": "User preferred response B",
+    "quality_metrics": {
+      "temperature": 0.7,
+      "max_tokens": 50,
+      "model": "deepseek-chat",
+      "cost": 0.000128
+    },
+    "annotation_version": "3.0",
+    "annotation_id": "ann_63a0dfa2",
+    "is_binary_preference": true,
+    "model_prediction": "ERROR",
+    "model_correct": null,
+    "confidence": null
+  }
+}

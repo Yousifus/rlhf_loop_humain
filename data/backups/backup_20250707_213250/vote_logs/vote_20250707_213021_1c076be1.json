@@ -1,0 +1,21 @@
+{
+  "prompt_id": "prompt_792afe2f",
+  "prompt": "short answer only, deepseek or claude? whos better?",
+  "preference": "Completion A",
+  "timestamp": "2025-07-07T21:30:21.576156",
+  "selected_completion": "Both are strong AI models, but the \"better\" choice depends on your needs:  \n\n- **DeepSeek**: Excels in long-context retention (128K), strong in coding, math, and complex reasoning. Free to use.  \n",
+  "rejected_completion": "Both are strong AI models, but the \"better\" choice depends on your needs:  \n\n- **DeepSeek**: Strong in coding, math, and long-context retention (128K). Free to use.  \n- **Claude (An",
+  "feedback": "User preferred response A",
+  "quality_metrics": {
+    "temperature": 0.7,
+    "max_tokens": 50,
+    "model": "deepseek-chat",
+    "cost": 0.000127
+  },
+  "annotation_version": "3.0",
+  "annotation_id": "ann_f069aefe",
+  "is_binary_preference": true,
+  "model_prediction": "ERROR",
+  "model_correct": null,
+  "confidence": null
+}

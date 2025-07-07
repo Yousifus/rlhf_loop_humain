@@ -1,11 +1,12 @@
 {
   "model_type": "reward_model",
-  "base_model_id": "distilbert-base-uncased",
-  "training_params": {
-    "epochs": 3,
-    "batch_size": 8,
-    "learning_rate": 1e-05,
-    "training_data": "D:\\Projects\\rlhf_loop\\data\\reward_model_training_data_20250522_200343.jsonl"
-  },
-  "timestamp": "2025-05-22T20:03:43.112411"
+  "algorithm": "RandomForestClassifier",
+  "model_path": "F:\\Projects\\rlhf_loop\\models\\reward_model\\reward_model.pkl",
+  "vectorizer_prompt_path": "F:\\Projects\\rlhf_loop\\models\\reward_model\\vectorizer_prompt.pkl",
+  "vectorizer_completion_path": "F:\\Projects\\rlhf_loop\\models\\reward_model\\vectorizer_completion.pkl",
+  "timestamp": "2025-07-07T21:39:49.701300",
+  "performance": {
+    "train_accuracy": 1.0,
+    "test_accuracy": 0.25
+  }
 }

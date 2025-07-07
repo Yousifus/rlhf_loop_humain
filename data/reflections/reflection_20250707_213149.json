@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-07-07T21:31:49.574947",
+  "vote_timestamp": "2025-07-07T21:31:49.574947",
+  "prompt": "one word answer only, deepseek or chatgpt? whos better?",
+  "human_choice": 0,
+  "model_prediction": 1,
+  "is_correct": null,
+  "human_confidence": 1.0,
+  "model_confidence": null,
+  "confidence_gap": null,
+  "error_type": "false_prediction",
+  "model_probabilities": [
+    0.5,
+    0.5
+  ],
+  "model_logits": [
+    0.0,
+    0.0
+  ],
+  "original_vote_metadata": {
+    "prompt_id": "prompt_8178dfb6",
+    "prompt": "one word answer only, deepseek or chatgpt? whos better?",
+    "preference": "Completion A",
+    "timestamp": "2025-07-07T21:31:49.574947",
+    "selected_completion": "Deepseek.",
+    "rejected_completion": "Deepseek",
+    "feedback": "User preferred response A",
+    "quality_metrics": {
+      "temperature": 0.7,
+      "max_tokens": 50,
+      "model": "deepseek-chat",
+      "cost": 2.4e-05
+    },
+    "annotation_version": "3.0",
+    "annotation_id": "ann_c6a7972d",
+    "is_binary_preference": true,
+    "model_prediction": "ERROR",
+    "model_correct": null,
+    "confidence": null
+  }
+}
