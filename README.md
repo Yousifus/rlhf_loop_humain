@@ -151,11 +151,7 @@ The dashboard explores the RLHF pipeline lifecycle:
 - **Health Checks** - System validation
 - **Performance Tracking** - Basic metrics collection
 
-### 🎨 **HUMAIN OS Design System**
-- **Primary Color:** `#1DB584` (HUMAIN Teal)
-- **Clean Interface:** Professional white backgrounds
-- **Responsive Layout** - Mobile-friendly design
-- **Performance Optimized** - Fast loading times
+
 
 ---
 
@@ -254,13 +250,13 @@ python tests/test_reflection_data.py
 
 ---
 
-## 📚 **Documentation**
+## 📚 **Project Files**
 
-| Resource | Description | Link |
-|----------|-------------|------|
-| 🏗️ **Architecture Guide** | System design & components | [`docs/architecture.md`](docs/architecture.md) |
-| 🚀 **Deployment Guide** | Setup instructions | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) |
-| 🧪 **Testing Guide** | QA procedures & validation | [`tests/README.md`](tests/README.md) |
+| File | Description |
+|------|-------------|
+| [`docs/architecture.md`](docs/architecture.md) | Project structure and data flow diagrams |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Setup and installation guide |
+| [`tests/README.md`](tests/README.md) | Testing guide and validation |
 
 ---
 
