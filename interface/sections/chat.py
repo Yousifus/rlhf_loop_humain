@@ -12,7 +12,7 @@ import logging
 import json
 from typing import List, Dict, Any
 
-from utils.completions import generate_completions
+from utils.api_client import get_api_client
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -21,56 +21,90 @@ def display_chat_interface():
     """Display the interactive chat interface"""
     st.header("💬 Interactive Chat Interface")
     
+    # Get selected provider from session state
+    selected_provider = st.session_state.get('selected_provider', 'deepseek')
+    
+    # Get API client for selected provider
+    try:
+        api_client = get_api_client(selected_provider)
+        provider_info = api_client.get_provider_info()
+    except Exception as e:
+        st.error(f"Error accessing {selected_provider} provider: {str(e)}")
+        return
+    
+    # Show current provider status
+    if provider_info["available"]:
+        st.success(f"✅ Connected to {provider_info['icon']} {provider_info['name']} (Model: {provider_info['model']})")
+    else:
+        st.error(f"❌ {provider_info['name']} is not available. Please check configuration in sidebar.")
+        return
+    
     # Initialize chat history in session state if it doesn't exist
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     
     # Model settings configuration
     with st.sidebar:
-        st.subheader("How I Express Myself")
-        model = st.selectbox(
-            "My Personality Mode",
-            options=["analytical", "conversational", "precise"],
-            index=0
+        st.subheader("🎯 Chat Settings")
+        
+        # Model mode selection
+        mode_info = api_client.get_mode_info()
+        current_mode = mode_info["current"]
+        available_modes = mode_info["available_modes"]
+        
+        selected_mode = st.selectbox(
+            "Response Style",
+            options=available_modes,
+            index=available_modes.index(current_mode),
+            format_func=lambda x: x.replace('_', ' ').title(),
+            help="Choose how the model should respond"
         )
+        
+        # Update mode if changed
+        if selected_mode != current_mode:
+            api_client.set_model_mode(selected_mode)
+        
         temperature = st.slider(
-            "My Spontaneity",
+            "Creativity Level",
             min_value=0.0,
             max_value=1.0,
             value=0.7,
             step=0.1,
-            help="How unpredictable I'll be: 0 = consistent, 1 = surprising"
+            help="0 = Consistent and predictable, 1 = Creative and varied"
         )
         max_tokens = st.slider(
-            "My Expressiveness",
-            min_value=100,
-            max_value=2000,
-            value=500,
-            step=100,
-            help="How detailed and elaborate my responses will be"
+            "Response Length",
+            min_value=50,
+            max_value=1000,
+            value=300,
+            step=50,
+            help="Maximum length of responses"
         )
         
         # Apply settings button
-        if st.button("Apply Settings"):
-            st.session_state.model_settings = {
-                "model": model,
+        if st.button("Apply Settings", use_container_width=True):
+            st.session_state.chat_settings = {
+                "mode": selected_mode,
                 "temperature": temperature,
                 "max_tokens": max_tokens
             }
-            st.success("Model settings have been updated successfully!")
+            st.success("Chat settings updated!")
     
     # Provide context and guidance
     with st.expander("ℹ️ Chat Interface Guide", expanded=not st.session_state.chat_history):
-        st.markdown("""
-        This is the interactive chat interface where you can communicate with the AI model and provide feedback.
+        st.markdown(f"""
+        **Currently using:** {provider_info['icon']} {provider_info['name']} with model `{provider_info['model']}`
         
-        In this interface:
-        - You can tell me anything, ask me anything
-        - You can provide feedback to improve responses
-        - You can monitor model performance and behavior
-        - You can adjust response parameters and settings
+        **In this interface you can:**
+        - Have natural conversations with the AI model
+        - Test different response styles and creativity levels
+        - Provide feedback to improve model performance
+        - Export chat history for analysis
         
-        Use the sidebar to configure model behavior and response style.
+        **Tips:**
+        - Use the sidebar to adjust response style and creativity
+        - Switch providers in the main sidebar if needed
+        - Give feedback with 👍/👎 buttons to help improve responses
         """)
     
     # Display chat history
@@ -80,13 +114,15 @@ def display_chat_interface():
             
             # Show message metadata for assistant messages
             if message["role"] == "assistant" and "metadata" in message:
-                with st.expander("Message Details"):
+                with st.expander("Response Details"):
                     metadata = message["metadata"]
                     col1, col2 = st.columns(2)
                     with col1:
+                        st.write(f"**Provider:** {metadata.get('provider', 'Unknown')}")
                         st.write(f"**Model:** {metadata.get('model', 'Unknown')}")
                         st.write(f"**Tokens:** {metadata.get('total_tokens', 'Unknown')}")
                     with col2:
+                        st.write(f"**Mode:** {metadata.get('mode', 'Unknown')}")
                         st.write(f"**Temperature:** {metadata.get('temperature', 'Unknown')}")
                         st.write(f"**Time:** {metadata.get('timestamp', 'Unknown')}")
             
@@ -96,13 +132,11 @@ def display_chat_interface():
                 with col1:
                     if st.button("👍 Good", key=f"good_{i}"):
                         st.session_state.chat_history[i]["feedback"] = "positive"
-                        # Save feedback to database
                         save_message_feedback(message["id"], "positive")
                         st.rerun()
                 with col2:
                     if st.button("👎 Improve", key=f"bad_{i}"):
                         st.session_state.chat_history[i]["feedback"] = "negative"
-                        # Save feedback to database
                         save_message_feedback(message["id"], "negative")
                         st.rerun()
             
@@ -110,7 +144,7 @@ def display_chat_interface():
             if message.get("feedback") == "positive":
                 st.success("✓ Positive feedback received - thank you!")
             elif message.get("feedback") == "negative":
-                                    st.error("✗ Negative feedback received - will improve")
+                st.error("✗ Negative feedback received - will improve")
     
     # Chat input
     if prompt := st.chat_input("Enter your message..."):
@@ -127,63 +161,74 @@ def display_chat_interface():
             st.write(prompt)
         
         # Generate response with progress indicator
-        with st.status("Crafting my response for you...", expanded=True) as status:
+        with st.status("Generating response...", expanded=True) as status:
             try:
-                # Get settings
-                settings = st.session_state.get("model_settings", {})
+                # Get chat settings
+                settings = st.session_state.get("chat_settings", {})
                 temperature = settings.get("temperature", 0.7)
-                max_tokens = settings.get("max_tokens", 500)
+                max_tokens = settings.get("max_tokens", 300)
+                mode = settings.get("mode", "analytical")
                 
-                st.write(f"Using DeepSeek model with temperature: {temperature}")
+                st.write(f"Using {provider_info['name']} with {mode} mode")
                 
-                # Use the generate_completions function from utils/completions.py
-                # This function already has the proper DeepSeek API configuration
-                response_data = generate_completions(
-                    prompt=prompt,
-                    n_completions=1,
-                    temperature=temperature,
-                    max_tokens=max_tokens
+                # Prepare conversation history for context
+                conversation_messages = []
+                for msg in st.session_state.chat_history[-10:]:  # Last 10 messages for context
+                    if msg["role"] in ["user", "assistant"]:
+                        conversation_messages.append({
+                            "role": msg["role"],
+                            "content": msg["content"]
+                        })
+                
+                # Generate response using the selected provider
+                response_data = api_client.generate_chat_response(
+                    messages=conversation_messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature
                 )
                 
-                # Extract the first completion
-                if response_data["completions"] and len(response_data["completions"]) > 0:
-                    response_content = response_data["completions"][0]
-                    
-                    status.update(label="My thoughts are ready for you!", state="complete")
-                    
-                    # Add assistant message to chat history
-                    message_id = str(uuid.uuid4())
-                    assistant_message = {
-                        "role": "assistant", 
-                        "content": response_content, 
-                        "timestamp": datetime.now().isoformat(),
-                        "id": message_id,
-                        "metadata": {
-                            "model": response_data.get("model_used", "deepseek-chat"),
-                            "temperature": temperature,
-                            "max_tokens": max_tokens,
-                            "total_tokens": response_data.get("aggregated_usage", {}).get("total_tokens", 0),
-                            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                            "estimated_cost": response_data.get("estimated_cost", 0)
-                        }
+                if "error" in response_data and response_data["error"]:
+                    raise Exception(response_data["completion"])
+                
+                response_content = response_data["completion"]
+                status.update(label="Response generated successfully!", state="complete")
+                
+                # Add assistant message to chat history
+                message_id = str(uuid.uuid4())
+                assistant_message = {
+                    "role": "assistant", 
+                    "content": response_content, 
+                    "timestamp": datetime.now().isoformat(),
+                    "id": message_id,
+                    "metadata": {
+                        "provider": response_data.get("provider", selected_provider),
+                        "model": response_data.get("model", "unknown"),
+                        "mode": mode,
+                        "temperature": temperature,
+                        "max_tokens": max_tokens,
+                        "total_tokens": response_data.get("total_tokens", 0),
+                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     }
-                    
-                    st.session_state.chat_history.append(assistant_message)
-                    
-                    # Save chat interaction for future analysis
-                    save_chat_interaction(prompt, response_content, message_id, "deepseek-chat")
-                    
-                else:
-                    raise Exception("No completion received from API")
+                }
+                
+                st.session_state.chat_history.append(assistant_message)
+                
+                # Save chat interaction for analysis
+                save_chat_interaction(
+                    prompt, 
+                    response_content, 
+                    message_id, 
+                    f"{selected_provider}:{response_data.get('model', 'unknown')}"
+                )
                 
             except Exception as e:
                 logger.error(f"Error generating response: {str(e)}")
-                status.update(label=f"System error occurred: {str(e)}", state="error")
+                status.update(label=f"Error: {str(e)}", state="error")
                 
                 # Add error message to chat history
                 error_message = {
                     "role": "assistant",
-                    "content": f"Error occurred: {str(e)}. Please check your settings and try again.",
+                    "content": f"❌ Error: {str(e)}",
                     "timestamp": datetime.now().isoformat(),
                     "id": str(uuid.uuid4()),
                     "error": True
@@ -203,23 +248,28 @@ def display_chat_interface():
     # Add options to reset chat or export conversation
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Start Fresh With Me") and st.session_state.chat_history:
+        if st.button("🔄 Clear Chat", use_container_width=True) and st.session_state.chat_history:
             st.session_state.chat_history = []
             st.rerun()
     
     with col2:
         if st.session_state.chat_history:
             # Prepare chat export
-            chat_export = ""
+            chat_export = f"Chat Conversation - {provider_info['name']}\n"
+            chat_export += f"Model: {provider_info['model']}\n"
+            chat_export += f"Exported: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            chat_export += "=" * 50 + "\n\n"
+            
             for msg in st.session_state.chat_history:
                 role = "User" if msg["role"] == "user" else "Assistant"
                 chat_export += f"{role}: {msg['content']}\n\n"
             
             st.download_button(
-                "Export Chat History",
+                "📥 Export Chat",
                 chat_export,
-                file_name=f"chat_conversation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                mime="text/plain"
+                file_name=f"chat_{selected_provider}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                mime="text/plain",
+                use_container_width=True
             )
 
 def save_chat_interaction(prompt, response, message_id, model):

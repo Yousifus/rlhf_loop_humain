@@ -5,6 +5,11 @@ RLHF Model API Client
 This module provides the API interface for connecting with language models
 in the RLHF system. It handles different response modes, communication patterns,
 and ensures consistent model behavior across interactions.
+
+Supports multiple providers:
+- DeepSeek API (cloud)
+- LM Studio (local)
+- OpenAI API (cloud)
 """
 
 import os
@@ -46,31 +51,247 @@ class ModelAPIClient:
         }
     }
     
-    def __init__(self, api_key: str = None, api_base: str = None, model: str = None):
+    # Provider configurations
+    PROVIDERS = {
+        "deepseek": {
+            "name": "DeepSeek API",
+            "api_base": "https://api.deepseek.com/v1",
+            "default_model": "deepseek-chat",
+            "requires_key": True,
+            "env_key": "DEEPSEEK_API_KEY",
+            "icon": "🌐"
+        },
+        "lmstudio": {
+            "name": "LM Studio (Local)",
+            "api_base": "http://localhost:1234/v1",
+            "default_model": "local-model",
+            "requires_key": False,
+            "env_key": None,
+            "icon": "🏠"
+        },
+        "openai": {
+            "name": "OpenAI API", 
+            "api_base": "https://api.openai.com/v1",
+            "default_model": "gpt-4o-mini",
+            "requires_key": True,
+            "env_key": "OPENAI_API_KEY",
+            "icon": "🤖"
+        }
+    }
+    
+    def __init__(self, provider: str = "deepseek", api_key: str = None, api_base: str = None, model: str = None):
         """
         Initialize the model API client.
         
         Args:
-            api_key: API key for authentication (reads from DEEPSEEK_API_KEY env var if None)
-            api_base: API base URL (uses DeepSeek by default)
-            model: Model identifier for API calls
+            provider: API provider ("deepseek", "lmstudio", "openai")
+            api_key: API key for authentication (auto-detected if None)
+            api_base: API base URL (uses provider default if None)
+            model: Model identifier for API calls (uses provider default if None)
         """
-        self.api_key = api_key or os.environ.get("DEEPSEEK_API_KEY")
-        if not self.api_key:
-            logger.warning("API key required for model communication. Set DEEPSEEK_API_KEY environment variable.")
+        self.provider = provider
+        self.provider_config = self.PROVIDERS.get(provider, self.PROVIDERS["deepseek"])
+        
+        # Set API configuration based on provider
+        if api_base:
+            self.api_base = api_base
+        else:
+            self.api_base = self.provider_config["api_base"]
             
-        self.api_base = api_base or "https://api.deepseek.com/v1"
-        self.model = model or "deepseek-chat"
-        self.request_headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
-        }
+        if api_key:
+            self.api_key = api_key
+        elif self.provider_config["requires_key"]:
+            self.api_key = os.environ.get(self.provider_config["env_key"])
+            if not self.api_key:
+                logger.warning(f"API key required for {self.provider_config['name']}. Set {self.provider_config['env_key']} environment variable.")
+        else:
+            self.api_key = "not-needed"  # LM Studio doesn't need API key
+            
+        if model:
+            self.model = model
+        else:
+            self.model = self.provider_config["default_model"]
+            
+        # Set up request headers
+        if self.provider_config["requires_key"] and self.api_key and self.api_key != "not-needed":
+            self.request_headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}"
+            }
+        else:
+            self.request_headers = {
+                "Content-Type": "application/json"
+            }
         
         # Track current model mode
         self.current_mode = "analytical"
         
-        logger.info(f"Model API client initialized with model: {self.model}")
+        # Check provider availability
+        self.available = self._check_availability()
+        
+        logger.info(f"Model API client initialized with {self.provider_config['name']} (model: {self.model})")
     
+    def update_api_key(self, new_api_key: str) -> bool:
+        """
+        Update the API key for this client and refresh headers.
+        
+        Args:
+            new_api_key: The new API key to use
+            
+        Returns:
+            True if key was updated successfully
+        """
+        try:
+            self.api_key = new_api_key
+            
+            # Update request headers with new key
+            if self.provider_config["requires_key"] and self.api_key and self.api_key != "not-needed":
+                self.request_headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}"
+                }
+            else:
+                self.request_headers = {
+                    "Content-Type": "application/json"
+                }
+            
+            # Re-check availability with new key
+            self.available = self._check_availability()
+            
+            logger.info(f"API key updated for {self.provider_config['name']}, available: {self.available}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error updating API key: {str(e)}")
+            return False
+    
+    def _check_availability(self) -> bool:
+        """Check if the current provider is available and responsive."""
+        try:
+            models_endpoint = f"{self.api_base}/models"
+            response = requests.get(models_endpoint, headers=self.request_headers, timeout=5)
+            
+            if response.status_code == 200:
+                logger.info(f"✅ {self.provider_config['name']} is available")
+                return True
+            else:
+                logger.warning(f"⚠️ {self.provider_config['name']} responded with status {response.status_code}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"❌ {self.provider_config['name']} is not available: {str(e)}")
+            return False
+    
+    def get_available_models(self) -> List[Dict[str, str]]:
+        """Get list of available models from the provider."""
+        try:
+            models_endpoint = f"{self.api_base}/models"
+            response = requests.get(models_endpoint, headers=self.request_headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                models = []
+                
+                if "data" in data:
+                    for model in data["data"]:
+                        models.append({
+                            "id": model.get("id", "unknown"),
+                            "name": model.get("id", "unknown"),
+                            "owned_by": model.get("owned_by", "unknown"),
+                            "created": model.get("created", 0)
+                        })
+                else:
+                    # Fallback for simple model lists
+                    models = [{"id": self.model, "name": self.model, "owned_by": "local", "created": 0}]
+                
+                logger.info(f"Found {len(models)} models on {self.provider_config['name']}")
+                return models
+            else:
+                logger.warning(f"Failed to fetch models: HTTP {response.status_code}")
+                return []
+                
+        except Exception as e:
+            logger.warning(f"Error fetching models: {str(e)}")
+            return []
+    
+    def set_model(self, model_id: str) -> bool:
+        """
+        Set the active model for this client.
+        
+        Args:
+            model_id: The model identifier to use
+            
+        Returns:
+            True if model was set successfully
+        """
+        available_models = self.get_available_models()
+        model_ids = [m["id"] for m in available_models]
+        
+        if model_ids and model_id in model_ids:
+            self.model = model_id
+            logger.info(f"Model set to: {model_id}")
+            return True
+        elif not model_ids:  # If we can't fetch models, allow any model
+            self.model = model_id
+            logger.info(f"Model set to: {model_id} (availability not verified)")
+            return True
+        else:
+            logger.warning(f"Model {model_id} not found in available models: {model_ids}")
+            return False
+    
+    def get_provider_info(self) -> Dict[str, Any]:
+        """Get information about the current provider and status."""
+        return {
+            "provider": self.provider,
+            "name": self.provider_config["name"],
+            "icon": self.provider_config["icon"],
+            "api_base": self.api_base,
+            "model": self.model,
+            "available": self.available,
+            "requires_key": self.provider_config["requires_key"],
+            "has_key": bool(self.api_key and self.api_key != "not-needed")
+        }
+    
+    @classmethod
+    def detect_available_providers(cls) -> List[Dict[str, Any]]:
+        """Detect which providers are currently available."""
+        available_providers = []
+        
+        for provider_id, config in cls.PROVIDERS.items():
+            try:
+                # Create temporary client to test availability
+                temp_client = cls(provider=provider_id)
+                provider_info = temp_client.get_provider_info()
+                
+                if temp_client.available:
+                    available_providers.append({
+                        "id": provider_id,
+                        "name": config["name"],
+                        "icon": config["icon"],
+                        "available": True,
+                        "models_count": len(temp_client.get_available_models())
+                    })
+                else:
+                    available_providers.append({
+                        "id": provider_id,
+                        "name": config["name"],
+                        "icon": config["icon"],
+                        "available": False,
+                        "models_count": 0
+                    })
+                    
+            except Exception as e:
+                logger.debug(f"Error detecting {provider_id}: {str(e)}")
+                available_providers.append({
+                    "id": provider_id,
+                    "name": config["name"],
+                    "icon": config["icon"],
+                    "available": False,
+                    "models_count": 0
+                })
+        
+        return available_providers
+
     def set_model_mode(self, mode: str) -> bool:
         """
         Set the model's response mode.
@@ -140,8 +361,11 @@ class ModelAPIClient:
         Returns:
             Response from the API including the completion text
         """
-        if not self.api_key:
-            raise ValueError("API key is required for generating completions")
+        if not self.available:
+            raise ValueError(f"{self.provider_config['name']} is not available")
+            
+        if self.provider_config["requires_key"] and not self.api_key:
+            raise ValueError(f"API key is required for {self.provider_config['name']}")
         
         endpoint = f"{self.api_base}/chat/completions"
         
@@ -169,6 +393,7 @@ class ModelAPIClient:
             structured_response = {
                 "completion": completion,
                 "model": result["model"],
+                "provider": self.provider,
                 "timestamp": datetime.now().isoformat(),
                 "prompt_tokens": result["usage"]["prompt_tokens"],
                 "completion_tokens": result["usage"]["completion_tokens"],
@@ -196,8 +421,23 @@ class ModelAPIClient:
         Returns:
             Model response with metadata
         """
-        if not self.api_key:
-            raise ValueError("API key required for chat response generation")
+        if not self.available:
+            return {
+                "completion": f"Error: {self.provider_config['name']} is not available",
+                "role": "assistant",
+                "error": True,
+                "provider": self.provider,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        if self.provider_config["requires_key"] and not self.api_key:
+            return {
+                "completion": f"Error: API key required for {self.provider_config['name']}",
+                "role": "assistant", 
+                "error": True,
+                "provider": self.provider,
+                "timestamp": datetime.now().isoformat()
+            }
         
         endpoint = f"{self.api_base}/chat/completions"
         
@@ -234,6 +474,7 @@ class ModelAPIClient:
                 "completion": completion,
                 "role": "assistant",
                 "model": result["model"],
+                "provider": self.provider,
                 "timestamp": datetime.now().isoformat(),
                 "prompt_tokens": result["usage"]["prompt_tokens"],
                 "completion_tokens": result["usage"]["completion_tokens"],
@@ -250,6 +491,7 @@ class ModelAPIClient:
                 "completion": f"Error: {str(e)}",
                 "role": "assistant",
                 "error": True,
+                "provider": self.provider,
                 "timestamp": datetime.now().isoformat()
             }
     
@@ -304,8 +546,11 @@ class ModelAPIClient:
                     {"role": "system", "content": varied_system_prompt}
                 ] + messages
                 
-                if not self.api_key:
-                    raise ValueError("API key required for completion generation")
+                if not self.available:
+                    raise ValueError(f"{self.provider_config['name']} is not available")
+                    
+                if self.provider_config["requires_key"] and not self.api_key:
+                    raise ValueError(f"API key required for {self.provider_config['name']}")
                 
                 endpoint = f"{self.api_base}/chat/completions"
                 
@@ -336,6 +581,7 @@ class ModelAPIClient:
                 structured_response = {
                     "completion": completion_text,
                     "model": result["model"],
+                    "provider": self.provider,
                     "timestamp": datetime.now().isoformat(),
                     "prompt_tokens": result["usage"]["prompt_tokens"],
                     "completion_tokens": result["usage"]["completion_tokens"],
@@ -361,6 +607,7 @@ class ModelAPIClient:
                 completions.append({
                     "completion": f"Error generating completion: {str(e)}",
                     "error": True,
+                    "provider": self.provider,
                     "timestamp": datetime.now().isoformat(),
                     "model_mode": self.current_mode,
                     "approach": approach["system_addition"].strip(),
@@ -369,12 +616,12 @@ class ModelAPIClient:
         
         return completions
 
-# Create a singleton instance
-_api_client = None
+# Create provider-specific singleton instances
+_api_clients = {}
 
-def get_api_client() -> ModelAPIClient:
-    """Get or create the API client singleton"""
-    global _api_client
-    if _api_client is None:
-        _api_client = ModelAPIClient()
-    return _api_client
+def get_api_client(provider: str = "deepseek") -> ModelAPIClient:
+    """Get or create the API client for a specific provider"""
+    global _api_clients
+    if provider not in _api_clients:
+        _api_clients[provider] = ModelAPIClient(provider=provider)
+    return _api_clients[provider]

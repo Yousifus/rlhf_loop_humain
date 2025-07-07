@@ -29,6 +29,9 @@ if project_root not in sys.path:
 from interface.components.data_loader import load_all_data, get_data_summary
 from interface.components.utils import AUTO_REFRESH_INTERVAL
 
+# Import API client for model provider management
+from utils.api_client import ModelAPIClient, get_api_client
+
 # Import RLHF pipeline sections
 from interface.sections.overview import show_dashboard_overview
 from interface.sections.annotation import display_annotation_interface, display_annotation_history
@@ -424,6 +427,328 @@ def create_pipeline_sidebar():
     with st.sidebar:
         st.markdown("## 📊 Pipeline Phases")
         
+        # Model Provider Selection Section
+        st.markdown("---")
+        st.markdown("## 🤖 Model Provider")
+        
+        # API Key Configuration Section
+        with st.expander("🔑 API Key Configuration", expanded=False):
+            st.markdown("**Configure API keys for cloud providers:**")
+            
+            # DeepSeek API Key
+            deepseek_key = st.text_input(
+                "DeepSeek API Key", 
+                value=st.session_state.get('deepseek_api_key', ''),
+                type="password",
+                help="Get your key from: https://platform.deepseek.com",
+                key="deepseek_key_input"
+            )
+            if deepseek_key != st.session_state.get('deepseek_api_key', ''):
+                st.session_state.deepseek_api_key = deepseek_key
+                # Update environment variable for current session
+                import os
+                os.environ['DEEPSEEK_API_KEY'] = deepseek_key
+                # Clear API client cache to force re-initialization with new key
+                from utils.api_client import _api_clients
+                if 'deepseek' in _api_clients:
+                    del _api_clients['deepseek']
+                st.success("DeepSeek API key updated!")
+                st.rerun()
+            
+            # OpenAI API Key  
+            openai_key = st.text_input(
+                "OpenAI API Key",
+                value=st.session_state.get('openai_api_key', ''),
+                type="password", 
+                help="Get your key from: https://platform.openai.com/api-keys",
+                key="openai_key_input"
+            )
+            if openai_key != st.session_state.get('openai_api_key', ''):
+                st.session_state.openai_api_key = openai_key
+                # Update environment variable for current session
+                import os
+                os.environ['OPENAI_API_KEY'] = openai_key
+                # Clear API client cache to force re-initialization with new key
+                from utils.api_client import _api_clients
+                if 'openai' in _api_clients:
+                    del _api_clients['openai']
+                st.success("OpenAI API key updated!")
+                st.rerun()
+            
+            # LM Studio info
+            st.info("💡 **LM Studio**: No API key needed! Just start your local server.")
+            
+            # Quick links
+            st.markdown("""
+            **Get API Keys:**
+            - [DeepSeek Platform](https://platform.deepseek.com) 
+            - [OpenAI Platform](https://platform.openai.com/api-keys)
+            """)
+        
+        # Detect available providers
+        available_providers = ModelAPIClient.detect_available_providers()
+        
+        # Refresh providers button
+        if st.button("🔄 Refresh Providers", use_container_width=True, help="Re-check provider availability after adding API keys"):
+            # Clear API client cache to force re-detection
+            from utils.api_client import _api_clients
+            _api_clients.clear()
+            
+            # Ensure environment variables are current
+            import os
+            if st.session_state.get('deepseek_api_key'):
+                os.environ['DEEPSEEK_API_KEY'] = st.session_state.deepseek_api_key
+            if st.session_state.get('openai_api_key'):
+                os.environ['OPENAI_API_KEY'] = st.session_state.openai_api_key
+            
+            # Force fresh provider detection
+            available_providers = ModelAPIClient.detect_available_providers()
+            st.success("Providers refreshed!")
+            st.rerun()
+        
+        # Get current provider from session state or default to first available
+        current_provider = st.session_state.get('selected_provider', 'deepseek')
+        
+        # Provider selection
+        provider_options = []
+        provider_mapping = {}
+        
+        for provider in available_providers:
+            status_icon = "✅" if provider["available"] else "❌"
+            models_info = f" ({provider['models_count']} models)" if provider["available"] and provider["models_count"] > 0 else ""
+            display_name = f"{provider['icon']} {provider['name']} {status_icon}{models_info}"
+            provider_options.append(display_name)
+            provider_mapping[display_name] = provider["id"]
+        
+        # Find current selection
+        current_display = None
+        for display_name, provider_id in provider_mapping.items():
+            if provider_id == current_provider:
+                current_display = display_name
+                break
+        
+        if not current_display and provider_options:
+            current_display = provider_options[0]
+            current_provider = provider_mapping[current_display]
+        
+        if provider_options:
+            selected_display = st.selectbox(
+                "Select Model Provider",
+                provider_options,
+                index=provider_options.index(current_display) if current_display in provider_options else 0,
+                key="provider_selector"
+            )
+            
+            selected_provider_id = provider_mapping[selected_display]
+            
+            # Update session state if provider changed
+            if selected_provider_id != st.session_state.get('selected_provider'):
+                st.session_state.selected_provider = selected_provider_id
+                st.rerun()
+        else:
+            st.error("No model providers detected")
+            selected_provider_id = 'deepseek'  # fallback
+        
+        # Get provider info and models
+        try:
+            current_client = get_api_client(selected_provider_id)
+            provider_info = current_client.get_provider_info()
+            
+            # Provider status
+            if provider_info["available"]:
+                st.success(f"✅ {provider_info['name']} Connected")
+                
+                # Model selection if available
+                available_models = current_client.get_available_models()
+                if available_models:
+                    model_options = [f"{model['id']}" for model in available_models]
+                    current_model = provider_info.get("model", model_options[0])
+                    
+                    # Find current model index
+                    model_index = 0
+                    if current_model in model_options:
+                        model_index = model_options.index(current_model)
+                    
+                    selected_model = st.selectbox(
+                        "Model",
+                        model_options,
+                        index=model_index,
+                        key=f"model_selector_{selected_provider_id}"
+                    )
+                    
+                    # Update model if changed
+                    if selected_model != current_model:
+                        current_client.set_model(selected_model)
+                        st.success(f"Model changed to {selected_model}")
+                
+                # Show provider details
+                with st.expander("Provider Details"):
+                    st.write(f"**Base URL:** {provider_info['api_base']}")
+                    st.write(f"**Current Model:** {provider_info['model']}")
+                    if provider_info['requires_key']:
+                        key_status = "🔑 Configured" if provider_info['has_key'] else "❌ Missing"
+                        st.write(f"**API Key:** {key_status}")
+                        if provider_info['has_key']:
+                            # Show first/last few characters for verification
+                            key_preview = "***" + provider_info.get('api_key', '')[-4:] if hasattr(provider_info, 'api_key') else "***[hidden]"
+                            st.write(f"**Key Preview:** {key_preview}")
+                    else:
+                        st.write("**API Key:** Not required (local)")
+                    
+                    if available_models:
+                        st.write(f"**Available Models:** {len(available_models)}")
+                        for model in available_models[:3]:  # Show first 3
+                            st.write(f"  • {model['id']}")
+                        if len(available_models) > 3:
+                            st.write(f"  ... and {len(available_models) - 3} more")
+                    
+                    # Debug info
+                    with st.expander("🔍 Debug Info"):
+                        st.write(f"**Provider ID:** {selected_provider_id}")
+                        st.write(f"**Available:** {provider_info['available']}")
+                        st.write(f"**Requires Key:** {provider_info['requires_key']}")
+                        st.write(f"**Has Key:** {provider_info['has_key']}")
+                        
+                        # Show environment variable status
+                        import os
+                        env_keys = {
+                            'deepseek': 'DEEPSEEK_API_KEY',
+                            'openai': 'OPENAI_API_KEY'
+                        }
+                        if selected_provider_id in env_keys:
+                            env_key = env_keys[selected_provider_id]
+                            env_value = os.environ.get(env_key, '')
+                            has_env_key = bool(env_value)
+                            st.write(f"**Env Var ({env_key}):** {'✅ Set' if has_env_key else '❌ Not set'}")
+                            if has_env_key:
+                                st.write(f"**Env Key Preview:** ***{env_value[-4:] if len(env_value) > 4 else env_value}")
+            else:
+                st.error(f"❌ {provider_info['name']} Unavailable")
+                
+                # Enhanced error diagnosis
+                if provider_info['requires_key'] and not provider_info['has_key']:
+                    if selected_provider_id == 'deepseek':
+                        st.warning("🔑 DeepSeek API key required")
+                        
+                        # Check if key was entered but not working
+                        import os
+                        entered_key = st.session_state.get('deepseek_api_key', '')
+                        env_key = os.environ.get('DEEPSEEK_API_KEY', '')
+                        
+                        if entered_key:
+                            st.info(f"🔍 **Diagnosis:** Key entered (***{entered_key[-4:] if len(entered_key) > 4 else entered_key}) but validation failed")
+                            st.markdown("""
+                            **Possible issues:**
+                            - Key might be incorrect or expired
+                            - Network connectivity issues
+                            - DeepSeek API service temporarily unavailable
+                            
+                            **Try:**
+                            1. Verify key at [DeepSeek Platform](https://platform.deepseek.com)
+                            2. Check your internet connection
+                            3. Click "🔄 Refresh Providers" again
+                            """)
+                        else:
+                            st.markdown("""
+                            **To fix:**
+                            1. Expand "🔑 API Key Configuration" above
+                            2. Enter your DeepSeek API key
+                            3. Click "🔄 Refresh Providers"
+                            
+                            **Get a key:** [DeepSeek Platform](https://platform.deepseek.com)
+                            """)
+                    elif selected_provider_id == 'openai':
+                        st.warning("🔑 OpenAI API key required")
+                        st.markdown("""
+                        **To fix:**
+                        1. Expand "🔑 API Key Configuration" above
+                        2. Enter your OpenAI API key
+                        3. Click "🔄 Refresh Providers"
+                        
+                        **Get a key:** [OpenAI Platform](https://platform.openai.com/api-keys)
+                        """)
+                    elif selected_provider_id == 'lmstudio':
+                        st.info("💡 Start LM Studio and enable API server")
+                        st.markdown("""
+                        **Quick Setup:**
+                        1. Open LM Studio desktop app
+                        2. Load a model (Download tab → Search → Load)
+                        3. Go to Developer tab
+                        4. Click "Start Server"
+                        5. Ensure port is 1234 (default)
+                        6. Click "🔄 Refresh Providers" above
+                        
+                        **Download LM Studio:** [lmstudio.ai](https://lmstudio.ai)
+                        """)
+                    else:
+                        st.warning(f"Provider {provider_info['name']} is not responding")
+                        st.info("💡 Check network connection and try refreshing providers")
+        
+        except Exception as e:
+            st.error(f"Error accessing provider: {str(e)}")
+            st.info("💡 Try refreshing providers or check your network connection")
+            
+        # Quick test button
+        if st.button("🧪 Test Provider", use_container_width=True):
+            try:
+                with st.spinner("Testing model provider..."):
+                    # Update API key if needed
+                    if selected_provider_id == 'deepseek' and st.session_state.get('deepseek_api_key'):
+                        current_client.update_api_key(st.session_state.deepseek_api_key)
+                    elif selected_provider_id == 'openai' and st.session_state.get('openai_api_key'):
+                        current_client.update_api_key(st.session_state.openai_api_key)
+                    
+                    # Test with a simple prompt
+                    response = current_client.generate_chat_response(
+                        [{"role": "user", "content": "Hello! Please respond with just 'Test successful' to confirm you're working."}],
+                        max_tokens=50,
+                        temperature=0.1
+                    )
+                    
+                    if "error" in response and response["error"]:
+                        # Show detailed error information
+                        error_msg = response['completion']
+                        st.error(f"❌ Test failed: {error_msg}")
+                        
+                        # Try to provide helpful diagnosis
+                        if "API key" in error_msg.lower() or "401" in error_msg or "unauthorized" in error_msg.lower():
+                            st.warning("🔍 **Diagnosis:** API key issue")
+                            st.info("Try re-entering your API key and refreshing providers")
+                        elif "404" in error_msg or "not found" in error_msg.lower():
+                            st.warning("🔍 **Diagnosis:** API endpoint or model not found")
+                        elif "timeout" in error_msg.lower() or "connection" in error_msg.lower():
+                            st.warning("🔍 **Diagnosis:** Network connectivity issue")
+                        else:
+                            st.info("🔍 Check the debug info above for more details")
+                    else:
+                        # Success!
+                        response_text = response['completion']
+                        st.success(f"✅ Test successful!")
+                        st.info(f"📝 **Response:** {response_text[:100]}...")
+                        
+                        # Show performance info
+                        if response.get('total_tokens'):
+                            st.caption(f"📊 Used {response['total_tokens']} tokens from {response.get('provider', 'unknown')} provider")
+                        
+            except Exception as e:
+                st.error(f"❌ Test failed: {str(e)}")
+                
+                # Enhanced error diagnosis
+                error_str = str(e).lower()
+                if "401" in error_str or "unauthorized" in error_str:
+                    st.warning("🔍 **Diagnosis:** Authentication failed - check your API key")
+                elif "404" in error_str:
+                    st.warning("🔍 **Diagnosis:** API endpoint not found - provider may be misconfigured")
+                elif "timeout" in error_str or "connection" in error_str:
+                    st.warning("🔍 **Diagnosis:** Network issue - check internet connection")
+                elif "not available" in error_str:
+                    st.warning("🔍 **Diagnosis:** Provider not available - try refreshing providers")
+                else:
+                    st.info("🔍 See debug info above for troubleshooting")
+            
+            # Store selected provider in session state
+            st.session_state.selected_provider = selected_provider_id
+        
         # Data Collection Phase
         with st.expander("📥 Data Collection", expanded=False):
             if st.button("📋 Annotation Interface", use_container_width=True):
@@ -508,6 +833,13 @@ def initialize_pipeline_session_state():
     for key, value in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = value
+    
+    # Initialize API keys from environment variables if available
+    import os
+    if 'deepseek_api_key' not in st.session_state:
+        st.session_state.deepseek_api_key = os.environ.get('DEEPSEEK_API_KEY', '')
+    if 'openai_api_key' not in st.session_state:
+        st.session_state.openai_api_key = os.environ.get('OPENAI_API_KEY', '')
 
 def should_refresh_data():
     """Smart data refresh logic for pipeline monitoring"""
