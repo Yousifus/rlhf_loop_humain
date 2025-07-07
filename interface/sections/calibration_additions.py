@@ -32,6 +32,12 @@ def display_confidence_correctness_heatmap(df):
         st.info("Not enough data points for heatmap analysis in the selected time range.")
         return
     
+    # Remove rows with NaN values
+    filtered_df = filtered_df.dropna(subset=['confidence', 'model_correct'])
+    if len(filtered_df) < 10:
+        st.warning("Insufficient valid data for heatmap analysis.")
+        return
+    
     # Create confidence bins
     n_bins = 10
     filtered_df['confidence_bin'] = pd.cut(
@@ -204,6 +210,11 @@ def display_pre_post_calibration_comparison(df):
     
     # Function to calculate calibration curve data
     def calculate_calibration_data(data):
+        # Remove NaN values before binning
+        data = data.dropna(subset=['confidence', 'model_correct'])
+        if len(data) < 5:
+            return pd.DataFrame()  # Return empty dataframe if insufficient data
+        
         # Bin the data by confidence
         data['confidence_bin'] = pd.cut(data['confidence'], bins=bin_edges, labels=False)
         
@@ -222,6 +233,11 @@ def display_pre_post_calibration_comparison(df):
     # Calculate calibration data for pre and post periods
     pre_cal_data = calculate_calibration_data(pre_cal_df)
     post_cal_data = calculate_calibration_data(post_cal_df)
+    
+    # Check if we have valid calibration data
+    if pre_cal_data.empty or post_cal_data.empty:
+        st.warning("Insufficient valid data for calibration curve comparison.")
+        return
     
     # Create the calibration curve comparison plot
     fig = go.Figure()

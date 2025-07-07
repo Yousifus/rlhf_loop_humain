@@ -13,7 +13,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
-from interface.components.visualization import plot_calibration_curve
+from interface.components.visualization import plot_confidence_vs_accuracy
 from interface.components.utils import create_time_slider, filter_by_time_range
 
 # Import additional calibration visualizations
@@ -97,13 +97,14 @@ def display_calibration_curves(df):
     
     # Plot calibration curve
     st.write("### Calibration Curve Analysis")
-    plot_calibration_curve(
+    fig = plot_confidence_vs_accuracy(
         filtered_df, 
-        score_col='confidence', 
-        actual_col='model_correct', 
-        n_bins=10, 
+        confidence_col='confidence', 
+        accuracy_col='model_correct', 
+        bins=10, 
         title="Confidence vs. Accuracy Calibration Curve"
     )
+    st.plotly_chart(fig, use_container_width=True)
     
     # Show detailed calibration statistics
     st.write("### Performance Metrics")
@@ -149,19 +150,25 @@ def display_calibration_curves(df):
     with col2:
         st.write("#### Performance by Confidence Level")
         
+        # Check for valid confidence data
+        valid_conf_data = filtered_df.dropna(subset=['confidence'])
+        if len(valid_conf_data) < 5:
+            st.warning("Insufficient valid confidence data for binning analysis.")
+            return
+        
         # Create confidence bins
         bins = [0, 0.6, 0.7, 0.8, 0.9, 1.0]
         bin_labels = ['0-60%', '60-70%', '70-80%', '80-90%', '90-100%']
         
-        filtered_df['confidence_bin'] = pd.cut(
-            filtered_df['confidence'], 
+        valid_conf_data['confidence_bin'] = pd.cut(
+            valid_conf_data['confidence'], 
             bins=bins, 
             labels=bin_labels,
             include_lowest=True
         )
         
         # Group by confidence bin
-        bin_stats = filtered_df.groupby('confidence_bin').agg(
+        bin_stats = valid_conf_data.groupby('confidence_bin').agg(
             sample_count=('model_correct', 'count'),
             accuracy=('model_correct', 'mean'),
             mean_confidence=('confidence', 'mean')
@@ -196,6 +203,12 @@ def display_confidence_distribution(df):
     # Check if we have confidence data
     if 'confidence' not in filtered_df.columns:
         st.warning("Confidence data not available.")
+        return
+    
+    # Remove rows with NaN confidence values
+    filtered_df = filtered_df.dropna(subset=['confidence'])
+    if len(filtered_df) < 5:
+        st.warning("Insufficient valid confidence data for distribution analysis.")
         return
     
     # Plot confidence distribution
@@ -330,6 +343,12 @@ def display_calibration_error(df):
     # Check if we have confidence and correctness data
     if 'confidence' not in filtered_df.columns or 'model_correct' not in filtered_df.columns:
         st.warning("Confidence or model correctness data not available.")
+        return
+    
+    # Remove rows with NaN values
+    filtered_df = filtered_df.dropna(subset=['confidence', 'model_correct'])
+    if len(filtered_df) < 10:
+        st.warning("Insufficient valid data for calibration error analysis.")
         return
     
     # Calculate expected calibration error

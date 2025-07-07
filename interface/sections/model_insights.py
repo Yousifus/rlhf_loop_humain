@@ -22,7 +22,7 @@ def display_model_insights():
     # Professional header
     st.markdown("""
     <div style="
-        background: linear-gradient(135deg, #ff6b9d, #c44569);
+        background: linear-gradient(135deg, #1DB584, #17a573);
         padding: 20px;
         border-radius: 15px;
         margin-bottom: 20px;
@@ -210,7 +210,7 @@ def display_calibration_insights():
                 y=df['calibration_error'],
                 mode='lines+markers',
                 name='Calibration Error',
-                line=dict(color='#ff6b9d', width=3),
+                line=dict(color='#1DB584', width=3),
                 marker=dict(size=8)
             ))
             
@@ -301,7 +301,7 @@ def display_performance_metrics():
             # Create pie chart of error types
             labels = []
             values = []
-            colors = ['#ff6b9d', '#c44569', '#8b2635']
+            colors = ['#1DB584', '#17a573', '#148f64']
             
             for error_type, count in error_counts.items():
                 if count > 0:

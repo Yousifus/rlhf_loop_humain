@@ -255,6 +255,20 @@ def plot_confidence_vs_accuracy(df, confidence_col='confidence', accuracy_col='m
     # Create calibration bins
     df_copy = df.copy()
     
+    # Remove rows with NaN confidence values
+    df_copy = df_copy.dropna(subset=[confidence_col, accuracy_col])
+    if len(df_copy) < 5:
+        # Return empty plot if insufficient data
+        fig = go.Figure()
+        fig.add_annotation(
+            text="Insufficient data for calibration analysis",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5, showarrow=False,
+            font=dict(size=16)
+        )
+        fig.update_layout(title=title, xaxis_title='Model Confidence', yaxis_title='Actual Accuracy')
+        return fig
+    
     # Create confidence bins
     df_copy['confidence_bin'] = pd.cut(df_copy[confidence_col], bins=bins, include_lowest=True)
     

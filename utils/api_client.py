@@ -51,16 +51,16 @@ class ModelAPIClient:
         Initialize the model API client.
         
         Args:
-            api_key: API key for authentication (reads from OPENAI_API_KEY env var if None)
-            api_base: API base URL (uses OpenAI by default)
+            api_key: API key for authentication (reads from DEEPSEEK_API_KEY env var if None)
+            api_base: API base URL (uses DeepSeek by default)
             model: Model identifier for API calls
         """
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
+        self.api_key = api_key or os.environ.get("DEEPSEEK_API_KEY")
         if not self.api_key:
-            logger.warning("API key required for model communication. Set OPENAI_API_KEY environment variable.")
+            logger.warning("API key required for model communication. Set DEEPSEEK_API_KEY environment variable.")
             
-        self.api_base = api_base or "https://api.openai.com/v1"
-        self.model = model or "gpt-3.5-turbo"
+        self.api_base = api_base or "https://api.deepseek.com/v1"
+        self.model = model or "deepseek-chat"
         self.request_headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}"
@@ -269,31 +269,55 @@ class ModelAPIClient:
         """
         completions = []
         
-        # Prepare messages with system context
-        messages = [{"role": "user", "content": prompt}]
-        prepared_messages = self._prepare_messages(messages)
-        
-        # Use mode-specific temperature if not overridden
-        mode_config = self.MODEL_MODES[self.current_mode]
-        if temperature == 0.7:  # Default value, use mode setting
-            temperature = mode_config["temperature"]
+        # Define distinct approaches for diversity
+        approaches = [
+            {
+                "temperature": 0.5,
+                "system_addition": " Provide a structured, step-by-step analysis.",
+                "top_p": 0.9
+            },
+            {
+                "temperature": 0.9,
+                "system_addition": " Use creative examples and analogies to explain concepts.",
+                "top_p": 0.95
+            },
+            {
+                "temperature": 0.7,
+                "system_addition": " Focus on practical applications and real-world implications.",
+                "top_p": 0.92
+            }
+        ]
         
         for i in range(num_completions):
             try:
-                # Generate each completion with slight temperature variation for diversity
-                completion_temp = temperature + (random.uniform(-0.1, 0.1) if i > 0 else 0)
-                completion_temp = max(0.1, min(1.0, completion_temp))  # Keep within bounds
+                # Use different approaches for each completion
+                approach = approaches[i % len(approaches)]
+                
+                # Prepare messages with varied system context
+                messages = [{"role": "user", "content": prompt}]
+                mode_config = self.MODEL_MODES[self.current_mode]
+                
+                # Modify system prompt for diversity
+                varied_system_prompt = mode_config["system_prompt"] + approach["system_addition"]
+                
+                prepared_messages = [
+                    {"role": "system", "content": varied_system_prompt}
+                ] + messages
                 
                 if not self.api_key:
                     raise ValueError("API key required for completion generation")
                 
                 endpoint = f"{self.api_base}/chat/completions"
                 
+                # Use the approach-specific parameters for diversity
                 payload = {
                     "model": self.model,
                     "messages": prepared_messages,
                     "max_tokens": max_tokens,
-                    "temperature": completion_temp,
+                    "temperature": approach["temperature"],
+                    "top_p": approach["top_p"],
+                    "frequency_penalty": 0.1 if i % 2 == 1 else 0.0,  # Add variety
+                    "presence_penalty": 0.1 if i % 2 == 0 else 0.0,   # Add variety
                 }
                 
                 response = requests.post(
@@ -318,7 +342,9 @@ class ModelAPIClient:
                     "total_tokens": result["usage"]["total_tokens"],
                     "finish_reason": result["choices"][0]["finish_reason"],
                     "model_mode": self.current_mode,
-                    "temperature_used": completion_temp,
+                    "temperature_used": approach["temperature"],
+                    "top_p_used": approach["top_p"],
+                    "approach": approach["system_addition"].strip(),
                     "completion_index": i,
                     "raw_response": result
                 }
@@ -331,11 +357,13 @@ class ModelAPIClient:
                     
             except Exception as e:
                 logger.error(f"Error generating completion {i+1}: {str(e)}")
+                approach = approaches[i % len(approaches)]  # Get the approach that was being used
                 completions.append({
                     "completion": f"Error generating completion: {str(e)}",
                     "error": True,
                     "timestamp": datetime.now().isoformat(),
                     "model_mode": self.current_mode,
+                    "approach": approach["system_addition"].strip(),
                     "completion_index": i
                 })
         

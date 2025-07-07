@@ -59,6 +59,11 @@ def create_time_slider(data_df, timestamp_col='timestamp', label="Select Time Ra
     min_date = data_df[timestamp_col].min().date()
     max_date = data_df[timestamp_col].max().date()
     
+    # Handle case where all data is from the same date
+    if min_date == max_date:
+        st.info(f"📅 All data is from {min_date.strftime('%Y-%m-%d')}. Showing complete dataset.")
+        return data_df
+    
     # Set default range (last 7 days or full range if shorter)
     default_start = max(min_date, max_date - timedelta(days=7))
     

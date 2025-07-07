@@ -218,8 +218,8 @@ class VotePredictor:
         # Apply calibration
         calibrated_confidence = apply_calibration(
             raw_prediction["confidence"],
-            self.calibration_method,
-            self.calibration_params["parameters"]
+            self.calibration_params,
+            self.calibration_method
         )
         
         # Update prediction with calibrated confidence

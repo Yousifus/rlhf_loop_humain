@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 import uuid
 import random
 import time
+import logging
 
 from interface.components.utils import (
     create_time_slider,
@@ -29,6 +30,9 @@ from interface.sections.annotation_additions import (
     display_annotation_wordcloud,
     display_theme_based_agreement
 )
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 def display_annotation_interface(vote_df):
     """Display the model training interface for user feedback"""
@@ -50,10 +54,11 @@ def display_annotation_interface(vote_df):
     # Model settings in sidebar with system configuration
     with st.sidebar:
         st.subheader("⚙️ Model Configuration")
-        model = st.selectbox(
-            "Model Type",
+        model_mode = st.selectbox(
+            "Response Style",
             options=["analytical", "conversational", "precise"],
-            index=0
+            index=0,
+            help="Choose the AI's response personality and style"
         )
         temperature = st.slider(
             "Response Creativity",
@@ -82,7 +87,7 @@ def display_annotation_interface(vote_df):
         # Apply settings button
         if st.button("Update Settings"):
             st.session_state.annotation_settings = {
-                "model": model,
+                "model_mode": model_mode,
                 "temperature": temperature,
                 "max_tokens": max_tokens,
                 "api_key": api_key if api_key else None
@@ -111,12 +116,15 @@ def display_annotation_interface(vote_df):
                     # Get settings
                     settings = st.session_state.get("annotation_settings", {})
                     api_key = settings.get("api_key")
-                    model = settings.get("model", "gpt-3.5-turbo")
+                    model_mode = settings.get("model_mode", "analytical")
                     temperature = settings.get("temperature", 0.7)
                     max_tokens = settings.get("max_tokens", 300)
                     
-                    # Initialize API client
-                    api_client = ModelAPIClient(api_key=api_key, model=model)
+                    # Initialize API client with correct DeepSeek model
+                    api_client = ModelAPIClient(api_key=api_key, model="deepseek-chat")
+                    
+                    # Set the response mode/personality
+                    api_client.set_model_mode(model_mode)
                     
                     # Generate completions
                     completions = api_client.generate_comparison(
@@ -132,7 +140,8 @@ def display_annotation_interface(vote_df):
                     st.session_state.completion_a = completions[0]["completion"]
                     st.session_state.completion_b = completions[1]["completion"]
                     st.session_state.completions_metadata = {
-                        "model": model,
+                        "model": "deepseek-chat",
+                        "model_mode": model_mode,
                         "temperature": temperature,
                         "max_tokens": max_tokens,
                         "timestamp": datetime.now().isoformat()
@@ -149,7 +158,11 @@ def display_annotation_interface(vote_df):
         # Show model info
         if st.session_state.get("completions_metadata"):
             metadata = st.session_state.get("completions_metadata")
-            st.info(f"Model: {metadata.get('model')} | Temperature: {metadata.get('temperature')}")
+            model_info = f"Model: {metadata.get('model', 'deepseek-chat')}"
+            if 'model_mode' in metadata:
+                model_info += f" ({metadata.get('model_mode')} mode)"
+            model_info += f" | Temperature: {metadata.get('temperature', 0.7)}"
+            st.info(model_info)
         
         col1, col2 = st.columns(2)
         
@@ -211,7 +224,7 @@ def display_annotation_interface(vote_df):
                     
                     # Save reflection about the annotation
                     reflection_text = f"User chose completion {annotation_data['human_choice']} for prompt: {annotation_data['prompt'][:100]}... This improves model alignment."
-                    db.save_model_reflection(reflection_text, operational_state="learning")
+                    db.save_model_reflection(reflection_text, analysis_type="learning")
                     
                 except Exception as e:
                     logger.error(f"Error saving to database: {str(e)}")

@@ -6,7 +6,7 @@ This module provides visualization and data processing utilities for the dashboa
 
 from utils.dashboard.data_loader import data_loader, DashboardDataLoader
 from utils.dashboard.visualizations import (
-    plot_calibration_curve,
+    plot_confidence_vs_accuracy,
     plot_drift_analysis,
     plot_model_performance_evolution,
     plot_basic_performance_evolution,
@@ -66,7 +66,7 @@ try:
         'plot_cluster_entropy_over_time',
         'prepare_cluster_stats_table',
         'generate_umap_for_drift_clusters',
-        'plot_calibration_curve',
+        'plot_confidence_vs_accuracy',
         'plot_drift_analysis',
         'plot_model_performance_evolution',
         'plot_basic_performance_evolution',

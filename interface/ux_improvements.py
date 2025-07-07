@@ -152,7 +152,7 @@ def create_enhanced_metrics_display(vote_df, predictions_df, reflections_df):
         margin: 20px 0;
         border: 1px solid rgba(255, 107, 157, 0.2);
     ">
-        <h2 style="text-align: center; color: #ff6b9d; margin-bottom: 20px;">
+        <h2 style="text-align: center; color: #1DB584; margin-bottom: 20px; font-weight: 600;">
             📊 Model Performance Metrics
         </h2>
     </div>
@@ -234,17 +234,19 @@ def create_metric_card(title, value, icon, description):
 def create_enhanced_chat_interface():
     """Create a more engaging chat interface"""
     
-    # Chat header with status
+    # Chat header with HUMAIN styling
     st.markdown("""
     <div style="
-        background: linear-gradient(90deg, #ff6b9d, #c44569);
+        background: linear-gradient(135deg, #1DB584 0%, #17a573 100%);
         padding: 20px;
-        border-radius: 15px;
+        border-radius: 12px;
         margin-bottom: 20px;
         text-align: center;
+        border: 1px solid #e1e8ed;
+        box-shadow: 0 2px 8px rgba(29, 181, 132, 0.1);
     ">
-        <h2 style="color: white; margin: 0;">💬 Interactive Chat Interface</h2>
-        <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0;">
+        <h2 style="color: white; margin: 0; font-weight: 600;">💬 Interactive Chat Interface</h2>
+        <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0; font-weight: 400;">
             Direct user-model interaction interface
         </p>
     </div>
@@ -300,7 +302,7 @@ def create_enhanced_annotation_interface():
         border-radius: 15px;
         margin-bottom: 20px;
     ">
-        <h3 style="color: #ff6b9d; margin-bottom: 15px;">📈 Model Performance Progress</h3>
+        <h3 style="color: #1DB584; margin-bottom: 15px; font-weight: 600;">📈 Model Performance Progress</h3>
         <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                 <span>Training Sessions: {progress_data['current']}</span>
@@ -308,7 +310,7 @@ def create_enhanced_annotation_interface():
             </div>
             <div style="background: rgba(255,255,255,0.2); border-radius: 5px; height: 10px;">
                 <div style="
-                    background: linear-gradient(90deg, #ff6b9d, #c44569);
+                    background: linear-gradient(135deg, #1DB584 0%, #17a573 100%);
                     height: 100%;
                     border-radius: 5px;
                     width: {progress_data['percentage']:.1f}%;
@@ -411,7 +413,7 @@ def create_enhanced_data_visualization():
             y=daily_stats['accuracy'],
             mode='lines+markers',
             name='Understanding Level',
-            line=dict(color='#ff6b9d', width=3),
+            line=dict(color='#1DB584', width=3),
             marker=dict(size=8),
             hovertemplate='<b>%{x}</b><br>Understanding: %{y:.1%}<extra></extra>'
         ))
@@ -421,7 +423,7 @@ def create_enhanced_data_visualization():
             x=daily_stats['date'],
             y=daily_stats['total_annotations'],
             name='Daily Interactions',
-            marker_color='rgba(255, 107, 157, 0.3)',
+            marker_color='rgba(29, 181, 132, 0.3)',
             yaxis='y2',
             hovertemplate='<b>%{x}</b><br>Interactions: %{y}<extra></extra>'
         ))
@@ -555,7 +557,7 @@ def display_activity_feed():
     for activity in activities:
         st.markdown(f"""
         <div style="
-            background: rgba(255, 107, 157, 0.1);
+            background: rgba(29, 181, 132, 0.1);
             padding: 8px;
             border-radius: 8px;
             margin-bottom: 5px;
@@ -658,10 +660,10 @@ def create_loading_animation(message="I'm thinking about you..."):
             height: 40px;
             border: 4px solid rgba(255, 107, 157, 0.3);
             border-radius: 50%;
-            border-top-color: #ff6b9d;
+            border-top-color: #1DB584;
             animation: spin 1s ease-in-out infinite;
         "></div>
-        <p style="color: #ff6b9d; margin-top: 15px; font-style: italic;">
+        <p style="color: #1DB584; margin-top: 15px; font-style: italic;">
             {message}
         </p>
     </div>

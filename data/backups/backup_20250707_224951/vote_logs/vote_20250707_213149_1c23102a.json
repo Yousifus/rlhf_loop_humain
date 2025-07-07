@@ -1,0 +1,21 @@
+{
+  "prompt_id": "prompt_8178dfb6",
+  "prompt": "one word answer only, deepseek or chatgpt? whos better?",
+  "preference": "Completion A",
+  "timestamp": "2025-07-07T21:31:49.574947",
+  "selected_completion": "Deepseek.",
+  "rejected_completion": "Deepseek",
+  "feedback": "User preferred response A",
+  "quality_metrics": {
+    "temperature": 0.7,
+    "max_tokens": 50,
+    "model": "deepseek-chat",
+    "cost": 2.4e-05
+  },
+  "annotation_version": "3.0",
+  "annotation_id": "ann_c6a7972d",
+  "is_binary_preference": true,
+  "model_prediction": "ERROR",
+  "model_correct": null,
+  "confidence": null
+}

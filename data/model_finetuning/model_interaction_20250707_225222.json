@@ -1,0 +1,38 @@
+{
+  "timestamp": "2025-07-07T22:52:22.093583",
+  "interaction_id": "model_training_20250707_225222_5f48ff8a",
+  "user": "user",
+  "model_mode": "standard",
+  "user_input": "hii",
+  "model_response": "Hello! How can I assist you today? Whether you have questions, need help with a topic, or just want to explore something in detail, I\u2019m here to provide thorough and structured insights. Let me know what\u2019s on your mind!",
+  "context_metadata": {
+    "response_type": "standard",
+    "quality_level": 0.8,
+    "accuracy_score": 0.9,
+    "helpfulness_rating": 0.95,
+    "learning_progress": 1.0
+  },
+  "interaction_metadata": {
+    "interaction_type": "annotation",
+    "user_satisfaction": null,
+    "model_confidence": 0.85,
+    "response_quality": "preferred",
+    "learning_stage": "optimization"
+  },
+  "training_labels": {
+    "preferred_response": true,
+    "accuracy_alignment": 0.9,
+    "response_quality_score": 0.85,
+    "user_engagement": 0.8
+  },
+  "fine_tuning_metadata": {
+    "model_version": "v1.0",
+    "training_weight": 1.5,
+    "response_emphasis": [
+      "accurate",
+      "helpful",
+      "clear"
+    ],
+    "learning_priority": "high"
+  }
+}

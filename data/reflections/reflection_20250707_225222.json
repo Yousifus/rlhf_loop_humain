@@ -1,0 +1,53 @@
+{
+  "timestamp": "2025-07-07T22:52:18.661163",
+  "vote_timestamp": "2025-07-07T22:52:18.661163",
+  "prompt": "hii",
+  "human_choice": 1,
+  "model_prediction": 1,
+  "is_correct": null,
+  "human_confidence": 1.0,
+  "model_confidence": null,
+  "confidence_gap": null,
+  "error_type": "false_prediction",
+  "model_probabilities": [
+    0.5,
+    0.5
+  ],
+  "model_logits": [
+    0.0,
+    0.0
+  ],
+  "original_vote_metadata": {
+    "id": "vote_3f7650fd",
+    "prompt_id": "prompt_1751917928",
+    "prompt": "hii",
+    "completion_a": "Hello! How can I assist you today? Whether you have questions, need help with a topic, or just want to explore something in detail, I'm here to provide thorough and structured insights. Let me know what's on your mind!",
+    "completion_b": "Hello! How can I assist you today? Whether you have questions, need help with a topic, or just want to explore something in detail, I\u2019m here to provide thorough and structured insights. Let me know what\u2019s on your mind!",
+    "selected_completion": "Hello! How can I assist you today? Whether you have questions, need help with a topic, or just want to explore something in detail, I\u2019m here to provide thorough and structured insights. Let me know what\u2019s on your mind!",
+    "rejected_completion": "Hello! How can I assist you today? Whether you have questions, need help with a topic, or just want to explore something in detail, I'm here to provide thorough and structured insights. Let me know what's on your mind!",
+    "timestamp": "2025-07-07T22:52:18.661163",
+    "model_choice": "B",
+    "human_choice": "B",
+    "preference": "Completion B",
+    "model_correct": null,
+    "metadata": {
+      "model": "deepseek-chat",
+      "model_mode": "analytical",
+      "temperature": 0.7,
+      "max_tokens": 300,
+      "timestamp": "2025-07-07T22:52:08.231137"
+    },
+    "system_metadata": {
+      "training_moment": "Model updated from user feedback at 2025-07-07T22:52:18.661163",
+      "feedback_quality": "high_quality",
+      "training_impact": "This choice improves model alignment",
+      "learning_intensity": "high",
+      "confidence_level": 0.95
+    },
+    "annotation_version": "3.0",
+    "annotation_id": "ann_fe8152cb",
+    "is_binary_preference": true,
+    "model_prediction": "ERROR",
+    "confidence": null
+  }
+}
