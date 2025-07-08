@@ -844,7 +844,7 @@ def initialize_pipeline_session_state():
 def should_refresh_data():
     """Smart data refresh logic for pipeline monitoring"""
     if 'vote_df' not in st.session_state:
-        return True
+    return True
 
     if st.session_state.auto_refresh:
         time_since_refresh = time.time() - st.session_state.last_data_refresh

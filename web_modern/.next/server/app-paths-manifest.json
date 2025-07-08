@@ -1,0 +1,6 @@
+{
+  "/settings/page": "app/settings/page.js",
+  "/chat/page": "app/chat/page.js",
+  "/annotation/page": "app/annotation/page.js",
+  "/drift/page": "app/drift/page.js"
+}

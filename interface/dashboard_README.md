@@ -74,7 +74,7 @@ streamlit run scripts/run_dashboard.py
 ```
 
 ### 🎮 **Rich Demo Mode**
-```bash
+   ```bash
 # Enable comprehensive demo with 450+ prompts
 python scripts/demo_mode.py enable
 streamlit run scripts/run_dashboard.py

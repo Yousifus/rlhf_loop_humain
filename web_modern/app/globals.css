@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --humain-primary: #1DB584;
+  --humain-primary-dark: #17a573;
+  --humain-secondary: #6B7280;
+  --humain-background: #FFFFFF;
+  --humain-surface: #F8FAFC;
+  --humain-text: #1F2937;
+  --humain-text-light: #6B7280;
+  --humain-border: #E5E7EB;
+  --humain-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+}
+
+@layer components {
+  /* HUMAIN Card Component */
+  .humain-card {
+    @apply bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200;
+  }
+  
+  .humain-card-content {
+    @apply p-6;
+  }
+  
+  /* HUMAIN Button Styles */
+  .humain-btn-primary {
+    @apply bg-humain-400 hover:bg-humain-500 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md;
+  }
+  
+  .humain-btn-secondary {
+    @apply bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg transition-colors duration-200;
+  }
+  
+  .humain-btn-ghost {
+    @apply text-humain-400 hover:text-humain-500 hover:bg-humain-50 font-medium px-4 py-2 rounded-lg transition-colors duration-200;
+  }
+  
+  /* HUMAIN Navigation */
+  .humain-nav-item {
+    @apply flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150;
+  }
+  
+  .humain-nav-item-active {
+    @apply bg-humain-50 text-humain-600 border-r-2 border-humain-400;
+  }
+  
+  .humain-nav-item-inactive {
+    @apply text-gray-600 hover:text-gray-900 hover:bg-gray-50;
+  }
+  
+  /* HUMAIN Metrics Cards */
+  .humain-metric-card {
+    @apply humain-card p-6 text-center;
+  }
+  
+  .humain-metric-value {
+    @apply text-2xl font-bold text-gray-900;
+  }
+  
+  .humain-metric-label {
+    @apply text-sm font-medium text-gray-500 mt-1;
+  }
+  
+  .humain-metric-change {
+    @apply text-xs font-medium mt-2;
+  }
+  
+  .humain-metric-positive {
+    @apply text-green-600;
+  }
+  
+  .humain-metric-negative {
+    @apply text-red-600;
+  }
+  
+  /* HUMAIN Loading States */
+  .humain-loading {
+    @apply animate-pulse;
+  }
+  
+  .humain-loading-skeleton {
+    @apply bg-gray-200 rounded;
+  }
+  
+  /* HUMAIN Forms */
+  .humain-input {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-humain-400 focus:border-humain-400;
+  }
+  
+  .humain-label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+  
+  /* HUMAIN Status Indicators */
+  .humain-status-online {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800;
+  }
+  
+  .humain-status-offline {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800;
+  }
+  
+  .humain-status-warning {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800;
+  }
+}
+
+@layer utilities {
+  /* HUMAIN Animation Utilities */
+  .humain-fade-in {
+    animation: humainFadeIn 0.5s ease-out;
+  }
+  
+  .humain-slide-up {
+    animation: humainSlideUp 0.3s ease-out;
+  }
+  
+  /* HUMAIN Grid Layouts */
+  .humain-grid-auto {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  
+  /* HUMAIN Scrollbar */
+  .humain-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  }
+  
+  .humain-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .humain-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .humain-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 3px;
+  }
+  
+  .humain-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.7);
+  }
+}
+
+/* HUMAIN Keyframes */
+@keyframes humainFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes humainSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* HUMAIN Focus Styles */
+.humain-focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-humain-400 focus:ring-offset-2;
+}
+
+/* HUMAIN Print Styles */
+@media print {
+  .humain-no-print {
+    display: none !important;
+  }
+  
+  .humain-card {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+  }
+} 

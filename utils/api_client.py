@@ -291,7 +291,7 @@ class ModelAPIClient:
                 })
         
         return available_providers
-
+    
     def set_model_mode(self, mode: str) -> bool:
         """
         Set the model's response mode.
