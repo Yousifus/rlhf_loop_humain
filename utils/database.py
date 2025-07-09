@@ -339,9 +339,11 @@ class RLHFDatabase:
                 # chosen_index should be set based on which completion was actually chosen
                 chosen_index = 0 if annotation_data["preference"] == "Completion A" else 1
             else:
-                # Legacy fallback - this creates inconsistent A/B ordering
-                completion_a = annotation_data["selected_completion"] if annotation_data["preference"] == "Completion A" else annotation_data["rejected_completion"]
-                completion_b = annotation_data["rejected_completion"] if annotation_data["preference"] == "Completion A" else annotation_data["selected_completion"]
+                # FIXED: Use consistent A/B ordering (same as _add_model_prediction)
+                # Always assign: A = selected_completion, B = rejected_completion
+                completion_a = annotation_data.get("selected_completion", "")
+                completion_b = annotation_data.get("rejected_completion", "")
+                # chosen_index is 0 if selected was chosen (A), 1 if rejected was chosen (B)
                 chosen_index = 0 if annotation_data["preference"] == "Completion A" else 1
             
             return {
