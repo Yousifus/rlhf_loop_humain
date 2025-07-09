@@ -249,9 +249,19 @@ class RLHFDatabase:
             from utils.vote_predictor.predict import predict_single, load_vote_predictor
             
             # Get prompt and completions
+            # FIXED: Maintain consistent A/B ordering - A is always the first option, B is always the second
             prompt = annotation_data["prompt"]
-            completion_a = annotation_data["selected_completion"] if annotation_data["preference"] == "Completion A" else annotation_data["rejected_completion"]
-            completion_b = annotation_data["rejected_completion"] if annotation_data["preference"] == "Completion A" else annotation_data["selected_completion"]
+            
+            # Extract completions from the annotation data
+            # Note: This assumes the UI presents options in a consistent order
+            if "completion_a" in annotation_data and "completion_b" in annotation_data:
+                completion_a = annotation_data["completion_a"]
+                completion_b = annotation_data["completion_b"]
+            else:
+                # Fallback: use selected/rejected but maintain consistent ordering
+                # This should be updated when the UI provides consistent A/B labeling
+                completion_a = annotation_data.get("selected_completion", "")
+                completion_b = annotation_data.get("rejected_completion", "")
             
             # Create a unique pair ID
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -322,13 +332,22 @@ class RLHFDatabase:
         is_binary = annotation_data.get("is_binary_preference", False)
         
         if is_binary:
-            completion_a = annotation_data["selected_completion"] if annotation_data["preference"] == "Completion A" else annotation_data["rejected_completion"]
-            completion_b = annotation_data["rejected_completion"] if annotation_data["preference"] == "Completion A" else annotation_data["selected_completion"]
+            # FIXED: Use consistent A/B ordering if available, otherwise fallback to selected/rejected
+            if "completion_a" in annotation_data and "completion_b" in annotation_data:
+                completion_a = annotation_data["completion_a"]
+                completion_b = annotation_data["completion_b"]
+                # chosen_index should be set based on which completion was actually chosen
+                chosen_index = 0 if annotation_data["preference"] == "Completion A" else 1
+            else:
+                # Legacy fallback - this creates inconsistent A/B ordering
+                completion_a = annotation_data["selected_completion"] if annotation_data["preference"] == "Completion A" else annotation_data["rejected_completion"]
+                completion_b = annotation_data["rejected_completion"] if annotation_data["preference"] == "Completion A" else annotation_data["selected_completion"]
+                chosen_index = 0 if annotation_data["preference"] == "Completion A" else 1
             
             return {
                 "prompt": annotation_data["prompt"],
                 "completions": [completion_a, completion_b],
-                "chosen_index": 0 if annotation_data["preference"] == "Completion A" else 1,
+                "chosen_index": chosen_index,
                 "confidence": annotation_data.get("confidence"),
                 "annotation": annotation_data.get("feedback", ""),
                 "generation_metadata": {
