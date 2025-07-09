@@ -990,6 +990,75 @@ async def save_annotation(request: Dict[str, Any]):
             "timestamp": datetime.now().isoformat()
         }
 
+# Chat completions endpoint for the web chat interface
+@app.post("/api/chat/completions")
+async def chat_completions(request: Dict[str, Any]):
+    """Handle chat completions for the web chat interface"""
+    try:
+        messages = request.get("messages", [])
+        max_tokens = request.get("max_tokens", 500)
+        temperature = request.get("temperature", 0.7)
+        
+        if not messages:
+            raise HTTPException(status_code=400, detail="Messages are required")
+        
+        # Get the default provider from settings
+        provider = settings_store["model"]["default_provider"]
+        
+        # Get API key from stored settings
+        provider_key_map = {
+            "deepseek": "deepseek",
+            "openai": "openai", 
+            "lmstudio": "lmstudio"
+        }
+        
+        api_key = None
+        api_base = None
+        
+        if provider in provider_key_map:
+            api_key = settings_store["apiKeys"].get(provider_key_map[provider])
+            if provider == "lmstudio":
+                api_base = api_key  # For LM Studio, the "key" is actually the base URL
+                api_key = None  # LM Studio doesn't need API key
+        
+        # Check if we have API key configured
+        if not api_key and provider != "lmstudio":
+            return {
+                "success": False,
+                "completion": f"No API key configured for provider: {provider}. Please configure API keys in the settings."
+            }
+        
+        # Create client with the stored API key
+        client = ModelAPIClient(provider=provider, api_key=api_key, api_base=api_base)
+        
+        # Generate response using the configured model
+        response = client.generate_chat_response(
+            messages,
+            max_tokens=max_tokens,
+            temperature=temperature
+        )
+        
+        if "error" in response and response["error"]:
+            return {
+                "success": False,
+                "completion": f"Error from {provider}: {response['completion']}"
+            }
+        else:
+            return {
+                "success": True,
+                "completion": response['completion'],
+                "provider": provider,
+                "model": response.get('model', 'unknown'),
+                "tokens_used": response.get('total_tokens', 0)
+            }
+            
+    except Exception as e:
+        print(f"Error in chat completions: {e}")
+        return {
+            "success": False,
+            "completion": f"Server error: {str(e)}"
+        }
+
 if __name__ == "__main__":
     import uvicorn
     print("🚀 Starting RLHF Dashboard API Server...")
