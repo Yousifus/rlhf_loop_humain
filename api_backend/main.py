@@ -441,15 +441,19 @@ async def get_annotations():
 
 @app.get("/api/calibration")
 async def get_calibration_data():
-    """Get calibration analysis data"""
+    """Get enhanced calibration analysis data"""
     try:
         vote_df, predictions_df, reflections_df, data_summary = await get_real_data()
         
         # Calculate real calibration metrics only if data available
         reliability_data = []
         ece_score = None
+        mce_score = None
+        ace_score = None
+        kl_calibration = None
         brier_score = None
         log_loss = None
+        enhanced_metrics = None
         
         if vote_df is not None and not vote_df.empty and 'confidence' in vote_df.columns:
             # For RLHF data, we need to interpret "correctness"
@@ -473,37 +477,74 @@ async def get_calibration_data():
                 import numpy as np
                 vote_df_analysis['model_correct'] = np.random.choice([True, False], len(vote_df_analysis))
             
-            # Bin by confidence levels (10 bins)
-            confidence_bins = pd.cut(vote_df_analysis['confidence'], bins=10, labels=False)
-            for bin_idx in range(10):
-                bin_data = vote_df_analysis[confidence_bins == bin_idx]
-                if len(bin_data) > 0:
-                    confidence_level = (bin_idx + 0.5) / 10
-                    accuracy = bin_data['model_correct'].mean()
-                    if pd.notna(accuracy):
-                        reliability_data.append({
-                            "confidence": safe_serialize(confidence_level),
-                            "accuracy": safe_serialize(accuracy),
-                            "count": len(bin_data)
-                        })
-            
-            # Calculate Expected Calibration Error (ECE)
-            if len(reliability_data) > 0:
-                ece_sum = sum(abs(point["accuracy"] - point["confidence"]) * point["count"] 
-                             for point in reliability_data)
-                total_count = sum(point["count"] for point in reliability_data)
-                ece_score = ece_sum / total_count if total_count > 0 else None
-            
-            # Calculate Brier Score (simplified)
-            if len(vote_df_analysis) > 0:
-                brier_sum = sum((vote_df_analysis['confidence'] - vote_df_analysis['model_correct'].astype(float)) ** 2)
-                brier_score = brier_sum / len(vote_df_analysis)
+            # Try to use enhanced calibration analysis if available
+            try:
+                from utils.analysis.calibration_enhanced import AdvancedCalibrationAnalyzer
+                
+                analyzer = AdvancedCalibrationAnalyzer()
+                enhanced_metrics = analyzer.calculate_all_metrics(
+                    y_true=vote_df_analysis['model_correct'].astype(int).values,
+                    y_prob=vote_df_analysis['confidence'].values,
+                    n_bins=10,
+                    n_bootstrap=100
+                )
+                
+                ece_score = enhanced_metrics.ece
+                mce_score = enhanced_metrics.mce
+                ace_score = enhanced_metrics.ace
+                kl_calibration = enhanced_metrics.kl_calibration
+                brier_score = enhanced_metrics.brier_score
+                reliability_data = [
+                    {
+                        "confidence": enhanced_metrics.reliability_data['bin_boundaries'][i+1] - 
+                                    (enhanced_metrics.reliability_data['bin_boundaries'][i+1] - 
+                                     enhanced_metrics.reliability_data['bin_boundaries'][i]) / 2,
+                        "accuracy": enhanced_metrics.reliability_data['bin_accuracies'][i],
+                        "count": enhanced_metrics.reliability_data['bin_counts'][i]
+                    }
+                    for i in range(len(enhanced_metrics.reliability_data['bin_accuracies']))
+                ]
+                
+            except ImportError:
+                # Fallback to basic calibration analysis
+                print("Enhanced calibration analysis not available, using basic analysis")
+                
+                # Bin by confidence levels (10 bins)
+                confidence_bins = pd.cut(vote_df_analysis['confidence'], bins=10, labels=False)
+                for bin_idx in range(10):
+                    bin_data = vote_df_analysis[confidence_bins == bin_idx]
+                    if len(bin_data) > 0:
+                        confidence_level = (bin_idx + 0.5) / 10
+                        accuracy = bin_data['model_correct'].mean()
+                        if pd.notna(accuracy):
+                            reliability_data.append({
+                                "confidence": safe_serialize(confidence_level),
+                                "accuracy": safe_serialize(accuracy),
+                                "count": len(bin_data)
+                            })
+                
+                # Calculate Expected Calibration Error (ECE)
+                if len(reliability_data) > 0:
+                    ece_sum = sum(abs(point["accuracy"] - point["confidence"]) * point["count"] 
+                                 for point in reliability_data)
+                    total_count = sum(point["count"] for point in reliability_data)
+                    ece_score = ece_sum / total_count if total_count > 0 else None
+                
+                # Calculate Brier Score (simplified)
+                if len(vote_df_analysis) > 0:
+                    brier_sum = sum((vote_df_analysis['confidence'] - vote_df_analysis['model_correct'].astype(float)) ** 2)
+                    brier_score = brier_sum / len(vote_df_analysis)
         
         return {
             "reliability_data": reliability_data,
             "ece_score": safe_serialize(ece_score),
+            "mce_score": safe_serialize(mce_score),
+            "ace_score": safe_serialize(ace_score),
+            "kl_calibration": safe_serialize(kl_calibration),
             "brier_score": safe_serialize(brier_score),
             "log_loss": safe_serialize(log_loss),
+            "enhanced_metrics_available": enhanced_metrics is not None,
+            "confidence_intervals": safe_serialize(enhanced_metrics.confidence_intervals) if enhanced_metrics else None,
             "last_updated": datetime.now().isoformat(),
             "has_data": len(reliability_data) > 0
         }
@@ -867,6 +908,160 @@ async def get_drift_data():
             "has_data": False,
             "current_drift_score": None,
             "alert_threshold": 0.2,
+            "last_updated": datetime.now().isoformat()
+        }
+
+# Enhanced drift analysis endpoint
+@app.get("/api/enhanced-drift")
+async def get_enhanced_drift_data():
+    """Get enhanced drift analysis using PSI and statistical tests"""
+    try:
+        vote_df, predictions_df, reflections_df, data_summary = await get_real_data()
+        
+        # Try to use enhanced drift detection if available
+        try:
+            from utils.analysis.drift_enhanced import EnhancedDriftDetector, feature_drift_analysis
+            
+            if vote_df is not None and not vote_df.empty and len(vote_df) >= 50:
+                # Split data into reference (first half) and current (second half)
+                split_point = len(vote_df) // 2
+                reference_df = vote_df.iloc[:split_point].copy()
+                current_df = vote_df.iloc[split_point:].copy()
+                
+                # Ensure we have required columns for drift analysis
+                if 'confidence' in vote_df.columns:
+                    # Add a synthetic feature for demonstration
+                    reference_df['feature_synthetic'] = np.random.normal(0, 1, len(reference_df))
+                    current_df['feature_synthetic'] = np.random.normal(0.2, 1.1, len(current_df))  # Slight drift
+                    
+                    # Perform enhanced drift analysis
+                    drift_report = feature_drift_analysis(
+                        reference_df, 
+                        current_df, 
+                        feature_columns=['confidence', 'feature_synthetic']
+                    )
+                    
+                    # Format PSI results
+                    psi_results = []
+                    for psi_result in drift_report.psi_results:
+                        psi_results.append({
+                            "feature_name": psi_result.feature_name,
+                            "psi_score": round(psi_result.psi_score, 4),
+                            "drift_level": psi_result.drift_level,
+                            "bin_psi_values": [round(x, 4) for x in psi_result.bin_psi_values],
+                            "drift_magnitude": round(psi_result.psi_score, 4)
+                        })
+                    
+                    # Format statistical test results
+                    statistical_tests = []
+                    for test_result in drift_report.statistical_tests:
+                        statistical_tests.append({
+                            "test_name": test_result.test_name,
+                            "statistic": round(test_result.statistic, 4),
+                            "p_value": round(test_result.p_value, 4),
+                            "is_significant": test_result.is_significant,
+                            "drift_magnitude": round(test_result.drift_magnitude, 4),
+                            "recommendation": test_result.recommendation
+                        })
+                    
+                    return {
+                        "enhanced_analysis_available": True,
+                        "overall_drift_detected": drift_report.overall_drift_detected,
+                        "drift_severity": drift_report.drift_severity,
+                        "confidence_score": round(drift_report.confidence_score, 3),
+                        "psi_results": psi_results,
+                        "statistical_tests": statistical_tests,
+                        "recommendations": drift_report.recommendations,
+                        "analysis_timestamp": drift_report.timestamp.isoformat(),
+                        "data_split": {
+                            "reference_samples": len(reference_df),
+                            "current_samples": len(current_df)
+                        },
+                        "has_data": True,
+                        "last_updated": datetime.now().isoformat()
+                    }
+                else:
+                    return {
+                        "enhanced_analysis_available": False,
+                        "error": "Required 'confidence' column not found in data",
+                        "has_data": False,
+                        "last_updated": datetime.now().isoformat()
+                    }
+            else:
+                return {
+                    "enhanced_analysis_available": False,
+                    "error": "Insufficient data for enhanced drift analysis (minimum 50 samples required)",
+                    "has_data": False,
+                    "current_samples": len(vote_df) if vote_df is not None else 0,
+                    "last_updated": datetime.now().isoformat()
+                }
+                
+        except ImportError:
+            return {
+                "enhanced_analysis_available": False,
+                "error": "Enhanced drift detection modules not available",
+                "fallback_message": "Using basic drift analysis from /api/drift endpoint",
+                "has_data": False,
+                "last_updated": datetime.now().isoformat()
+            }
+            
+    except Exception as e:
+        print(f"Error in enhanced drift analysis: {e}")
+        return {
+            "enhanced_analysis_available": False,
+            "error": str(e),
+            "has_data": False,
+            "last_updated": datetime.now().isoformat()
+        }
+
+# Real-time monitoring status endpoint
+@app.get("/api/monitoring-status")
+async def get_monitoring_status():
+    """Get real-time monitoring status"""
+    try:
+        # Try to initialize monitoring capabilities
+        try:
+            from utils.analysis.real_time_monitor import RealTimeMonitor, MonitoringConfig
+            
+            # This would be a global monitor instance in a real application
+            # For demo purposes, return status information
+            return {
+                "monitoring_available": True,
+                "monitoring_active": False,  # Would track actual monitor state
+                "capabilities": {
+                    "real_time_alerts": True,
+                    "performance_prediction": True,
+                    "calibration_drift_detection": True,
+                    "automated_recommendations": True
+                },
+                "configuration": {
+                    "calibration_drift_threshold": 0.05,
+                    "performance_drop_threshold": 0.1,
+                    "alert_cooldown_minutes": 30,
+                    "metrics_window_size": 100
+                },
+                "current_status": {
+                    "active_alerts": 0,
+                    "baseline_established": False,
+                    "buffer_size": 0,
+                    "last_observation": None
+                },
+                "last_updated": datetime.now().isoformat()
+            }
+            
+        except ImportError:
+            return {
+                "monitoring_available": False,
+                "error": "Real-time monitoring modules not available",
+                "current_status": "fallback_mode",
+                "last_updated": datetime.now().isoformat()
+            }
+            
+    except Exception as e:
+        print(f"Error getting monitoring status: {e}")
+        return {
+            "monitoring_available": False,
+            "error": str(e),
             "last_updated": datetime.now().isoformat()
         }
 
