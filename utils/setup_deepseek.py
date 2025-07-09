@@ -74,17 +74,21 @@ def setup_api_key(api_key=None, force=False):
         os.environ["DEEPSEEK_API_KEY"] = api_key
         print("API key set in current environment")
         
-        # Print instructions for activating the key
+        # Print instructions for activating the key (masked for security)
+        masked_key = f"{api_key[:6]}...{api_key[-4:]}" if api_key and len(api_key) > 10 else "***"
+        
         if sys.platform.startswith("win"):
             print("\nTo activate the API key in your current PowerShell session, run:")
-            print(f"$env:DEEPSEEK_API_KEY = \"{api_key}\"")
+            print(f"$env:DEEPSEEK_API_KEY = \"<your_api_key_here>\"")
+            print(f"# Your key: {masked_key}")
             print("\nTo make it permanent, add to your PowerShell profile:")
-            print(f"[Environment]::SetEnvironmentVariable('DEEPSEEK_API_KEY', '{api_key}', 'User')")
+            print(f"[Environment]::SetEnvironmentVariable('DEEPSEEK_API_KEY', '<your_api_key_here>', 'User')")
         else:
             print("\nTo activate the API key in your current shell session, run:")
-            print(f"export DEEPSEEK_API_KEY=\"{api_key}\"")
+            print(f"export DEEPSEEK_API_KEY=\"<your_api_key_here>\"")
+            print(f"# Your key: {masked_key}")
             print("\nTo make it permanent, add to your shell profile (~/.bashrc, ~/.zshrc, etc.):")
-            print(f"export DEEPSEEK_API_KEY=\"{api_key}\"")
+            print(f"export DEEPSEEK_API_KEY=\"<your_api_key_here>\"")
             
         return True
     

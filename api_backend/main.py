@@ -39,7 +39,8 @@ import json
 # Settings file path
 SETTINGS_FILE = "api_backend/settings.json"
 
-# Global data store
+# Global data store - centralized cache for RLHF data
+# This stores loaded DataFrames and metadata to avoid repeated file I/O
 data_store = {
     "last_refresh": 0,
     "vote_df": None,
@@ -104,16 +105,7 @@ app.add_middleware(
 # Cache for expensive operations
 cache = TTLCache(maxsize=100, ttl=300)  # 5-minute cache
 
-# Global data store
-data_store = {
-    "last_refresh": 0,
-    "vote_df": None,
-    "predictions_df": None,
-    "reflections_df": None,
-    "data_summary": None
-}
-
-# Settings loaded from persistent storage
+# Note: Global data store is declared above after imports
 
 def safe_serialize(obj):
     """Safely serialize numpy/pandas objects to JSON-compatible types"""

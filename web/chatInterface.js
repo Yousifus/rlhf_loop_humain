@@ -30,15 +30,15 @@ class RLHFChatInterface {
         this.showTypingIndicator();
 
         try {
-            // Send to API
-            const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+            // SECURITY FIX: Use backend proxy endpoint instead of direct API calls
+            // This prevents API key exposure in client-side code
+            const response = await fetch('/api/chat/completions', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY || 'your-api-key-here'}`
+                    // No API key needed - backend handles authentication
                 },
                 body: JSON.stringify({
-                    model: 'deepseek-chat',
                     messages: [
                         { role: 'system', content: 'You are an AI assistant that provides helpful, accurate, and professional responses.' },
                         { role: 'user', content: message }
@@ -53,8 +53,8 @@ class RLHFChatInterface {
             // Hide typing indicator
             this.hideTypingIndicator();
             
-            if (data.choices && data.choices[0]) {
-                this.appendMessage('assistant', data.choices[0].message.content);
+            if (data.success && data.completion) {
+                this.appendMessage('assistant', data.completion);
             } else {
                 this.appendMessage('assistant', 'Sorry, I encountered an error processing your request.');
             }
