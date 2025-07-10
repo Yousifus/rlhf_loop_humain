@@ -27,6 +27,7 @@ interface Settings {
     deepseek: string
     openai: string
     lmstudio: string
+    grok: string
   }
   model: {
     default_provider: string
@@ -91,7 +92,8 @@ export default function ChatPage() {
           apiKeys: {
             deepseek: '',
             openai: '',
-            lmstudio: 'http://localhost:1234'
+            lmstudio: 'http://localhost:1234',
+            grok: ''
           },
           model: {
             default_provider: 'deepseek',
@@ -107,7 +109,8 @@ export default function ChatPage() {
         apiKeys: {
           deepseek: '',
           openai: '',
-          lmstudio: 'http://localhost:1234'
+          lmstudio: 'http://localhost:1234',
+          grok: ''
         },
         model: {
           default_provider: 'deepseek',
@@ -253,6 +256,7 @@ export default function ChatPage() {
     if (provider === 'lmstudio') return !!globalSettings.apiKeys?.lmstudio
     if (provider === 'deepseek') return !!globalSettings.apiKeys?.deepseek
     if (provider === 'openai') return !!globalSettings.apiKeys?.openai
+    if (provider === 'grok') return !!globalSettings.apiKeys?.grok
     return false
   }
 

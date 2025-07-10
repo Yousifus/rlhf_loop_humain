@@ -13,7 +13,8 @@ export default function SettingsPage() {
     apiKeys: {
       deepseek: '',
       openai: '',
-      lmstudio: 'http://localhost:1234'
+      lmstudio: 'http://localhost:1234',
+      grok: ''
     },
     notifications: {
       email: true,
@@ -114,7 +115,8 @@ export default function SettingsPage() {
         apiKeys: {
           deepseek: '',
           openai: '',
-          lmstudio: 'http://localhost:1234'
+          lmstudio: 'http://localhost:1234',
+          grok: ''
         },
         notifications: {
           email: true,
@@ -239,6 +241,40 @@ export default function SettingsPage() {
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   Get your key from <a href="https://platform.openai.com" className="text-humain-400 hover:text-humain-500">OpenAI Platform</a>
+                </p>
+              </div>
+
+              <div>
+                <label className="humain-label">Grok (X.AI) API Key</label>
+                <div className="flex space-x-2">
+                  <input
+                    type="password"
+                    placeholder="xai-..."
+                    value={settings.apiKeys.grok}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      apiKeys: { ...prev.apiKeys, grok: e.target.value }
+                    }))}
+                    className="humain-input flex-1"
+                  />
+                  <button
+                    onClick={() => testApiConnection('grok')}
+                    disabled={!settings.apiKeys.grok || testingApi === 'grok'}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 flex items-center"
+                  >
+                    {testingApi === 'grok' ? (
+                      'Testing...'
+                    ) : apiStatus.grok === true ? (
+                      <CheckCircleIcon className="h-4 w-4 text-green-500" />
+                    ) : apiStatus.grok === false ? (
+                      <XCircleIcon className="h-4 w-4 text-red-500" />
+                    ) : (
+                      'Test'
+                    )}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Get your key from <a href="https://console.x.ai" className="text-humain-400 hover:text-humain-500">X.AI Console</a>
                 </p>
               </div>
 
@@ -414,6 +450,7 @@ export default function SettingsPage() {
                 >
                   <option value="deepseek">DeepSeek</option>
                   <option value="openai">OpenAI</option>
+                  <option value="grok">Grok (X.AI)</option>
                   <option value="lmstudio">LM Studio</option>
                 </select>
               </div>

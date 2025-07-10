@@ -76,6 +76,14 @@ class ModelAPIClient:
             "requires_key": True,
             "env_key": "OPENAI_API_KEY",
             "icon": "🤖"
+        },
+        "grok": {
+            "name": "Grok (X.AI)",
+            "api_base": "https://api.x.ai/v1",
+            "default_model": "grok-3-beta",
+            "requires_key": True,
+            "env_key": "XAI_API_KEY",
+            "icon": "⚡"
         }
     }
     

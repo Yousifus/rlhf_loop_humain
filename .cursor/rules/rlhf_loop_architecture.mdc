@@ -1,0 +1,140 @@
+---
+description: Comprehensive RLHF Loop project architecture guide. Apply when discussing project structure, interface relationships, naming conventions, or implementation decisions. Essential for understanding dual-interface philosophy, enhanced annotation system, and technical architecture.
+globs: 
+alwaysApply: false
+---
+
+# RLHF Loop Architecture Reference
+
+**Definitive architecture guide for RLHF Loop multi-interface system with Enhanced Rich Annotation.**
+
+## 🎯 **Primary Active Interfaces**
+
+### **ShadCN Dashboard** (`web_modern/`)
+- **Tech**: Next.js 13+ with ShadCN UI components  
+- **Purpose**: Fast daily dashboard + **Enhanced Annotation System**
+- **Status**: ✅ Production-ready
+- **Start**: `cd web_modern && npm run dev` (Port 3000)
+- **Key Feature**: Revolutionary rich feedback collection interface
+
+### **Streamlit Dashboard** (`interface/`)  
+- **Tech**: Streamlit comprehensive analysis platform
+- **Purpose**: Deep research, scientific analysis
+- **Status**: ✅ Mature analytical powerhouse  
+- **Start**: `streamlit run interface/rlhf_loop.py`
+
+### **Backend API** (`api_backend/`)
+- **Tech**: FastAPI with SQLite integration
+- **Purpose**: Core data engine + **rich annotation storage**
+- **Status**: ✅ Production backend
+- **Start**: `python api_backend/start_backend.py`
+
+## 🌟 **Enhanced Annotation System**
+
+### **Revolutionary Components:**
+1. **Quality Sliders**: Rate accuracy, clarity, completeness, helpfulness, creativity (0-10)
+2. **Choice Reasons**: Why you chose (better explanation, more accurate, etc.)
+3. **Rejection Reasons**: What was wrong (factual errors, confusing, etc.)
+4. **Confidence Rating**: Decision certainty (0-100%)
+5. **Rich Data Storage**: SQLite `quality_metrics` JSON field
+
+### **Vote Predictor Enhancement:**
+- **25+ features** vs 3-4 basic (700% improvement)
+- **Quality gap analysis** for superior predictions
+- **Explainable AI** with reasoning breakdown
+- **Confidence weighting** for better training
+
+## 🗂️ **Data Architecture**
+
+### **SQLite Database** (`data/rlhf.db`)
+```sql
+CREATE TABLE votes (
+    quality_metrics TEXT  -- JSON with rich annotation data
+);
+```
+
+### **Rich Annotation JSON Structure:**
+```json
+{
+  "choice_confidence": 85,
+  "chosen_quality": {"accuracy": 8, "clarity": 9},
+  "rejected_quality": {"accuracy": 6, "clarity": 5},
+  "choice_reasons": {"better_explanation": true},
+  "rejection_reasons": {"factual_errors": true}
+}
+```
+
+## 📁 **Directory Structure**
+
+```
+rlhf_loop/
+├── web_modern/          # ShadCN Dashboard (Enhanced Annotation)
+├── interface/           # Streamlit Dashboard  
+├── api_backend/         # FastAPI Backend
+├── utils/sqlite_db.py   # Enhanced SQLite integration
+├── data/rlhf.db        # SQLite with rich annotation schema
+└── .cursor/rules/       # Project rules
+```
+
+## 🎯 **Naming Conventions (Use Exactly)**
+
+- **"ShadCN Dashboard"** = `web_modern/` (React/Next.js)
+- **"Streamlit Dashboard"** = `interface/` (Python analytical)
+- **"Backend API"** = `api_backend/` (FastAPI)
+- **"Enhanced Annotation System"** = Rich feedback collection
+
+## 🚀 **Standard Workflows**
+
+### **Enhanced Annotation Workflow:**
+```bash
+# 1. Start ShadCN Dashboard
+cd web_modern && npm run dev
+
+# 2. Navigate to /annotation
+# 3. Rich annotation process:
+#    - Choose better response (A or B)
+#    - Rate quality dimensions (0-10 sliders)
+#    - Select choice/rejection reasons
+#    - Set confidence level
+#    - Submit rich data → SQLite → Vote predictor
+```
+
+### **Development Pattern:**
+- **ShadCN**: Daily monitoring + **rich annotation collection**
+- **Streamlit**: Research + comprehensive analysis
+- **Backend**: Shared processing + **rich annotation storage**
+
+## 📈 **Current Status**
+
+### **Phase 4 Achievements:**
+- ✅ **Enhanced Annotation System**: Revolutionary rich feedback **COMPLETE**
+- ✅ **Rich Data Integration**: SQLite, API, vote predictor **COMPLETE**
+- ✅ **Enhanced Dashboard**: Professional ShadCN structure
+- ✅ **Spotlight Integration**: Command palette
+- 🔄 **Visualization Upgrade**: Connecting Phase 3 backend
+
+### **Major Breakthrough:**
+- **700% improvement** in training features (25+ vs 3-4)
+- **Explainable AI** predictions with reasoning
+- **Beautiful UX** with professional interface
+- **SQLite integration** with efficient JSON storage
+
+## 🧠 **Architecture Principles**
+
+1. **Dual Interface Philosophy**: Fast React + comprehensive Streamlit
+2. **Shared Backend**: Single FastAPI serves both
+3. **Rich Feedback**: Multi-dimensional preference capture
+4. **Demo-First**: Rich demo data for exploration
+5. **Data-Driven**: SQLite + JSONL with automated backups
+
+## 📚 **Reference Files**
+
+Key files to understand:
+- @web_modern/app/annotation/page.tsx - Enhanced annotation interface
+- @utils/sqlite_db.py - SQLite integration with rich data
+- @api_backend/main.py - FastAPI backend with annotation endpoints
+- @web_modern/app/globals.css - Custom slider styling
+
+---
+
+**Use this reference for consistent terminology and architecture understanding across all RLHF Loop development.** 

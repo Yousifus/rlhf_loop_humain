@@ -1,0 +1,303 @@
+---
+description: RLHF Loop coding standards and development patterns. Apply when writing code, implementing features, or following project conventions. Includes enhanced annotation patterns, TypeScript interfaces, and vote predictor training standards.
+globs: 
+alwaysApply: false
+---
+
+# RLHF Loop Coding Standards
+
+**Development patterns and standards for RLHF Loop with Enhanced Rich Annotation System.**
+
+## 🐍 **Python Standards**
+
+### **Core Patterns**
+```python
+# JSONL data handling
+import json
+with open('data/predictions.jsonl', 'r') as f:
+    data = [json.loads(line) for line in f]
+
+# Analysis function structure
+def analyze_calibration(predictions: List[dict]) -> Dict[str, float]:
+    """Calculate calibration metrics with ECE, MCE, and reliability."""
+    return {"ece": ece_score, "mce": mce_score, "reliability": reliability}
+```
+
+### **Rich Annotation Data Handling**
+```python
+# Enhanced SQLite integration
+from utils.sqlite_db import RLHFSQLiteDB
+import json
+
+def extract_rich_features(annotation: dict) -> dict:
+    """Extract enhanced features from rich annotation data."""
+    quality_metrics = json.loads(annotation.get('quality_metrics', '{}'))
+    
+    if 'chosen_quality' not in quality_metrics:
+        return {}  # Basic annotation
+    
+    chosen_q = quality_metrics['chosen_quality']
+    rejected_q = quality_metrics['rejected_quality']
+    
+    # Quality gap features (most predictive)
+    return {
+        'accuracy_gap': chosen_q.get('accuracy', 5) - rejected_q.get('accuracy', 5),
+        'clarity_gap': chosen_q.get('clarity', 5) - rejected_q.get('clarity', 5),
+        'choice_confidence': quality_metrics.get('choice_confidence', 70) / 100,
+        
+        # Choice reasons as binary features
+        **{f"reason_{k}": v for k, v in quality_metrics.get('choice_reasons', {}).items()},
+        
+        # Rejection reasons as binary features  
+        **{f"reject_{k}": v for k, v in quality_metrics.get('rejection_reasons', {}).items()}
+    }
+```
+
+### **Vote Predictor Training Pattern**
+```python
+def train_enhanced_vote_predictor(annotations: List[dict]) -> None:
+    """Train vote predictor using rich annotation features."""
+    rich_features = []
+    targets = []
+    
+    for ann in annotations:
+        features = extract_rich_features(ann)
+        if features:  # Has rich data
+            rich_features.append(features)
+            targets.append(1 if ann['human_choice'] == 'A' else 0)
+    
+    # Train with enhanced feature set (25+ features vs 3-4 basic)
+    if len(rich_features) >= 3:
+        # Quality gaps provide stronger signal than raw text features
+        pass
+```
+
+## ⚛️ **React/TypeScript Standards**
+
+### **Enhanced Annotation Interfaces**
+```tsx
+// Rich annotation data structures
+interface QualityRatings {
+  accuracy: number;
+  clarity: number;
+  completeness: number;
+  helpfulness: number;
+  creativity: number;
+}
+
+interface ChoiceReasons {
+  better_explanation: boolean;
+  more_accurate: boolean;
+  clearer_structure: boolean;
+  better_examples: boolean;
+  more_comprehensive: boolean;
+  engaging_tone: boolean;
+  fewer_errors: boolean;
+}
+
+interface RichAnnotationData {
+  choice_confidence: number;
+  chosen_quality: QualityRatings;
+  rejected_quality: QualityRatings;
+  choice_reasons: ChoiceReasons;
+  rejection_reasons: RejectionReasons;
+  additional_feedback: string;
+}
+```
+
+### **Component Patterns**
+```tsx
+// Quality slider component
+const QualitySlider = ({ 
+  dimension, 
+  value, 
+  onChange, 
+  type = 'chosen' 
+}: {
+  dimension: keyof QualityRatings;
+  value: number;
+  onChange: (value: number) => void;
+  type?: 'chosen' | 'rejected';
+}) => {
+  const sliderClass = type === 'chosen' ? 'slider-green' : 'slider-red';
+  
+  return (
+    <div className="mb-3">
+      <div className="flex justify-between text-sm mb-1">
+        <span className="capitalize">{dimension.replace('_', ' ')}</span>
+        <span className="font-medium">{value}/10</span>
+      </div>
+      <input
+        type="range"
+        min="0"
+        max="10"
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value))}
+        className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer ${sliderClass}`}
+      />
+    </div>
+  );
+};
+```
+
+### **ShadCN Integration**
+- Use ShadCN components over custom styling
+- Implement loading states with skeletons
+- Custom sliders: Use CSS classes (slider-green, slider-red, slider-blue)
+- Mobile-first responsive design
+
+## 📊 **Data Standards**
+
+### **SQLite Rich Annotation Schema**
+```sql
+-- Enhanced annotation table
+CREATE TABLE votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    prompt TEXT NOT NULL,
+    completion_a TEXT NOT NULL,
+    completion_b TEXT NOT NULL,
+    human_choice TEXT,
+    confidence REAL DEFAULT 0.8,
+    quality_metrics TEXT,  -- JSON field for rich annotation data
+    feedback TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### **Quality Metrics JSON Structure**
+```json
+{
+  "choice_confidence": 85,
+  "chosen_quality": {
+    "accuracy": 8,
+    "clarity": 9,
+    "completeness": 7,
+    "helpfulness": 8,
+    "creativity": 6
+  },
+  "rejected_quality": {
+    "accuracy": 6,
+    "clarity": 5,
+    "completeness": 6,
+    "helpfulness": 5,
+    "creativity": 4
+  },
+  "choice_reasons": {
+    "better_explanation": true,
+    "more_accurate": true,
+    "fewer_errors": true
+  },
+  "rejection_reasons": {
+    "factual_errors": true,
+    "confusing_explanation": true
+  },
+  "selection_method": "rich_annotation_v2"
+}
+```
+
+### **API Patterns**
+```python
+# Rich annotation endpoints
+@app.get("/api/annotations")
+async def get_annotations() -> Dict[str, Any]:
+    """Get annotations with rich quality metrics."""
+    db = RLHFSQLiteDB()
+    annotations = db.get_annotations()
+    
+    # Ensure quality_metrics is properly parsed
+    for ann in annotations:
+        if isinstance(ann.get('quality_metrics'), str):
+            ann['quality_metrics'] = json.loads(ann['quality_metrics'])
+    
+    return {"annotations": annotations, "count": len(annotations)}
+
+@app.post("/api/annotations/save")
+async def save_rich_annotation(annotation_data: dict) -> Dict[str, Any]:
+    """Save rich annotation with quality metrics."""
+    db = RLHFSQLiteDB()
+    
+    # Ensure quality_metrics is JSON string for SQLite
+    if 'quality_metrics' in annotation_data:
+        annotation_data['quality_metrics'] = json.dumps(annotation_data['quality_metrics'])
+    
+    result = db.save_annotation(annotation_data)
+    return {"success": True, "annotation_id": result}
+```
+
+## 🎯 **Development Patterns**
+
+### **Interface-Specific Roles**
+- **ShadCN Dashboard**: Fast, beautiful, **enhanced annotation collection**
+- **Streamlit Dashboard**: Comprehensive, analytical, research-focused  
+- **Backend API**: Shared logic, **rich annotation storage**
+
+### **Rich Annotation Development Flow**
+1. **Design TypeScript interfaces** for rich data structures
+2. **Create React components** with quality sliders and checkboxes
+3. **Implement CSS styling** for visual feedback
+4. **Add API endpoints** for saving/loading rich annotations
+5. **Enhance SQLite schema** with quality_metrics JSON field
+6. **Update vote predictor** to use rich features
+7. **Test with demo data** and validate with real annotations
+
+### **File Organization**
+```
+rlhf_loop/
+├── web_modern/app/annotation/page.tsx    # Enhanced annotation interface
+├── utils/sqlite_db.py                    # SQLite integration
+├── api_backend/main.py                   # FastAPI endpoints
+├── web_modern/app/globals.css            # Custom slider styling
+└── .cursor/rules/                        # Project rules
+```
+
+## 🧠 **Vote Predictor Enhancement Standards**
+
+### **Rich Feature Engineering**
+- **Quality gaps more predictive** than absolute scores
+- **Confidence weighting** improves training signal quality
+- **Reason patterns** capture user preference logic
+- **Multi-dimensional analysis** vs single preference score
+
+### **Training Data Quality**
+- **High confidence annotations** (80%+) weighted more heavily
+- **Consistent reason patterns** indicate reliable preferences
+- **Quality dimension analysis** reveals user priorities
+- **Rejection analysis** provides negative training signals
+
+### **Model Explainability**
+- Vote predictor explains predictions using rich features
+- "I predict A because: clarity gap +2.1, better examples selected"
+- Quality dimensions provide interpretable decision factors
+- Confidence levels indicate prediction certainty
+
+## 📁 **Reference Files**
+
+Key implementation files:
+- @web_modern/app/annotation/page.tsx - Enhanced annotation interface
+- @utils/sqlite_db.py - SQLite integration with rich data
+- @api_backend/main.py - FastAPI backend with annotation endpoints
+- @web_modern/app/globals.css - Custom slider CSS classes
+
+## 📈 **Rich Annotation Benefits**
+
+### **Development:**
+- **25+ training features** vs 3-4 basic (700% improvement)
+- **TypeScript safety** with comprehensive interfaces
+- **Beautiful UI** with professional sliders and animations
+- **SQLite integration** with efficient JSON handling
+
+### **Machine Learning:**
+- **Better vote predictor accuracy** from quality gap analysis
+- **Explainable predictions** using reason pattern recognition
+- **Confidence-weighted training** for superior performance
+- **Multi-dimensional preference learning** vs binary choices
+
+### **User Experience:**
+- **Intuitive workflow** from choice to detailed analysis
+- **Visual feedback** through interface elements
+- **Data transparency** - see exactly what's collected
+- **Research insights** into personal preference patterns
+
+---
+
+**Follow these standards for consistent, high-quality RLHF Loop development with enhanced annotation capabilities.**

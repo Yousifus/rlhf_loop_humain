@@ -1,0 +1,202 @@
+---
+description: RLHF Loop development workflows and commands. Apply when starting development tasks, troubleshooting issues, or setting up the system. Includes enhanced annotation workflows, demo mode management, and debugging strategies.
+globs: 
+alwaysApply: false
+---
+
+# RLHF Loop Development Workflows
+
+**Essential commands and workflows for RLHF Loop development with Enhanced Annotation System.**
+
+## 🚀 **Quick Start Commands**
+
+### **Full System Startup**
+```bash
+# 1. Start Backend API (Always first)
+python api_backend/start_backend.py
+
+# 2. Choose interface:
+cd web_modern && npm run dev     # ShadCN Dashboard + Enhanced Annotation
+# OR
+streamlit run interface/rlhf_loop.py  # Comprehensive analysis
+
+# 3. Enable demo data (optional)
+python scripts/demo_mode.py enable
+```
+
+### **Demo Mode Management**
+```bash
+python scripts/demo_mode.py enable   # Rich demo data (450+ prompts)
+python scripts/demo_mode.py status   # Check current status
+python scripts/demo_mode.py disable  # Use real data
+```
+
+## 🌟 **Enhanced Annotation Workflows**
+
+### **Rich Feedback Collection**
+```bash
+# Start enhanced annotation system
+cd web_modern && npm run dev
+# Navigate to localhost:3000/annotation
+
+# Rich annotation process:
+# Step 1: Choose Response (A vs B)
+# Step 2: Quality Analysis (5 sliders, 0-10 scale)
+# Step 3: Reasoning Analysis (choice + rejection checkboxes)
+# Step 4: Submit → SQLite → Vote predictor training
+```
+
+### **Vote Predictor Training Data**
+```python
+# Check rich annotation data
+from utils.sqlite_db import RLHFSQLiteDB
+db = RLHFSQLiteDB()
+annotations = db.get_annotations()
+
+# Verify rich features (25+ vs 3-4 basic)
+for ann in annotations:
+    metrics = ann.get('quality_metrics', {})
+    if 'chosen_quality' in metrics:
+        print(f"Rich annotation: {ann['id']}")
+```
+
+## 🔧 **Development Commands**
+
+### **ShadCN Dashboard Development**
+```bash
+cd web_modern && npm run dev        # Start development
+npx shadcn-ui@latest add [component] # Add components
+npm run dev -- -p 3001             # Alternative port
+```
+
+### **Backend API Development**  
+```bash
+python api_backend/start_backend.py  # Start with auto-reload
+curl http://localhost:8000/health    # Health check
+curl http://localhost:8000/api/annotations  # Test annotations
+```
+
+### **Enhanced Annotation Testing**
+```bash
+# Test rich annotation interface
+cd web_modern && npm run dev
+
+# Verify SQLite rich data
+python -c "
+from utils.sqlite_db import RLHFSQLiteDB
+import json
+db = RLHFSQLiteDB()
+anns = db.get_annotations()
+for ann in anns:
+    if ann.get('quality_metrics'):
+        print(f'Rich data found: {ann[\"id\"]}')
+        break
+"
+```
+
+## 🐛 **Troubleshooting Guide**
+
+### **Port Conflicts**
+```bash
+# Find process using port
+netstat -ano | findstr :3000
+
+# Kill process (Windows)
+taskkill /PID [PID] /F
+
+# Use alternative port
+npm run dev -- -p 3001
+```
+
+### **Rich Annotation Issues**
+| Problem | Solution |
+|---------|----------|
+| Sliders not working | Check CSS classes: slider-green, slider-red, slider-blue |
+| Rich data not saving | Verify SQLite schema has quality_metrics JSON field |
+| Vote predictor not using rich features | Ensure quality_metrics contains chosen_quality, rejected_quality |
+
+### **Data Issues**
+```bash
+# Missing data
+python scripts/demo_mode.py enable
+
+# Restore from backup
+ls data/backups/  # List available backups
+# Copy from backup_YYYYMMDD_HHMMSS/ to data/
+
+# Check database
+python -c "from utils.sqlite_db import RLHFSQLiteDB; db = RLHFSQLiteDB(); print(len(db.get_annotations()))"
+```
+
+## 📊 **Rich Annotation Analysis**
+
+### **Quality Pattern Analysis**
+```python
+# Analyze rich annotation patterns
+from utils.sqlite_db import RLHFSQLiteDB
+import json
+
+db = RLHFSQLiteDB()
+annotations = db.get_annotations()
+
+# Find rich annotations
+for ann in annotations:
+    metrics = json.loads(ann.get('quality_metrics', '{}'))
+    if 'chosen_quality' in metrics:
+        chosen = metrics['chosen_quality']
+        rejected = metrics['rejected_quality']
+        
+        # Quality gaps (most predictive features)
+        accuracy_gap = chosen['accuracy'] - rejected['accuracy']
+        clarity_gap = chosen['clarity'] - rejected['clarity']
+        
+        print(f"Accuracy gap: {accuracy_gap}, Clarity gap: {clarity_gap}")
+```
+
+### **Vote Predictor Training Benefits**
+- **25+ features** vs 3-4 basic (700% improvement)
+- **Quality gap analysis**: chosen_score - rejected_score
+- **Reason pattern recognition**: checkbox selections
+- **Confidence weighting**: high confidence = stronger signal
+
+## 📁 **File References**
+
+Key files for development:
+- @web_modern/app/annotation/page.tsx - Enhanced annotation interface
+- @utils/sqlite_db.py - SQLite integration with rich data  
+- @api_backend/main.py - Backend with annotation endpoints
+- @scripts/demo_mode.py - Demo data management
+- @data/rlhf.db - SQLite database with quality_metrics
+
+## 🎯 **Phase 4 Status**
+
+### **Completed Features:**
+- ✅ **Enhanced Annotation System** - Revolutionary rich feedback
+- ✅ **Rich Data Integration** - SQLite, API, vote predictor  
+- ✅ **Quality Sliders** - 5 dimensions, color-coded
+- ✅ **Reason Analysis** - Choice + rejection checkboxes
+- ✅ **Confidence Rating** - 0-100% slider
+
+### **Development Priorities:**
+- 🔄 Visualization upgrade (connecting Phase 3 backend)
+- ⏳ Automation UI (control center)
+- ⏳ Real-time integration (WebSocket)
+
+## 💡 **Best Practices**
+
+### **Rich Annotation Collection:**
+1. **Start with custom prompts** - Test specific scenarios
+2. **Use all quality dimensions** - Rate accuracy, clarity, completeness, helpfulness, creativity
+3. **Select specific reasons** - Don't just choose, explain why
+4. **Set honest confidence** - High confidence data trains better models
+5. **Add detailed feedback** - Optional text for edge cases
+
+### **Development Workflow:**
+1. **Backend first** - Ensure API endpoints work
+2. **Rich annotation** - Collect enhanced feedback
+3. **Test with demo data** - Validate functionality
+4. **Train vote predictor** - Use rich features for superior performance
+
+---
+
+**Follow these workflows for efficient RLHF Loop development with enhanced annotation capabilities.**

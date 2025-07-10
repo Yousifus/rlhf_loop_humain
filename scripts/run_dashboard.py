@@ -475,6 +475,26 @@ def create_pipeline_sidebar():
                 st.success("OpenAI API key updated!")
                 st.rerun()
             
+            # Grok (X.AI) API Key
+            grok_key = st.text_input(
+                "Grok (X.AI) API Key",
+                value=st.session_state.get('grok_api_key', ''),
+                type="password",
+                help="Get your key from: https://console.x.ai",
+                key="grok_key_input"
+            )
+            if grok_key != st.session_state.get('grok_api_key', ''):
+                st.session_state.grok_api_key = grok_key
+                # Update environment variable for current session
+                import os
+                os.environ['XAI_API_KEY'] = grok_key
+                # Clear API client cache to force re-initialization with new key
+                from utils.api_client import _api_clients
+                if 'grok' in _api_clients:
+                    del _api_clients['grok']
+                st.success("Grok API key updated!")
+                st.rerun()
+            
             # LM Studio info
             st.info("💡 **LM Studio**: No API key needed! Just start your local server.")
             
@@ -483,6 +503,7 @@ def create_pipeline_sidebar():
             **Get API Keys:**
             - [DeepSeek Platform](https://platform.deepseek.com) 
             - [OpenAI Platform](https://platform.openai.com/api-keys)
+            - [X.AI Console](https://console.x.ai)
             """)
         
         # Detect available providers
@@ -500,6 +521,8 @@ def create_pipeline_sidebar():
                 os.environ['DEEPSEEK_API_KEY'] = st.session_state.deepseek_api_key
             if st.session_state.get('openai_api_key'):
                 os.environ['OPENAI_API_KEY'] = st.session_state.openai_api_key
+            if st.session_state.get('grok_api_key'):
+                os.environ['XAI_API_KEY'] = st.session_state.grok_api_key
             
             # Force fresh provider detection
             available_providers = ModelAPIClient.detect_available_providers()
@@ -666,6 +689,16 @@ def create_pipeline_sidebar():
                         3. Click "🔄 Refresh Providers"
                         
                         **Get a key:** [OpenAI Platform](https://platform.openai.com/api-keys)
+                        """)
+                    elif selected_provider_id == 'grok':
+                        st.warning("🔑 Grok (X.AI) API key required")
+                        st.markdown("""
+                        **To fix:**
+                        1. Expand "🔑 API Key Configuration" above
+                        2. Enter your Grok API key
+                        3. Click "🔄 Refresh Providers"
+                        
+                        **Get a key:** [X.AI Console](https://console.x.ai)
                         """)
                     elif selected_provider_id == 'lmstudio':
                         st.info("💡 Start LM Studio and enable API server")
@@ -840,6 +873,8 @@ def initialize_pipeline_session_state():
         st.session_state.deepseek_api_key = os.environ.get('DEEPSEEK_API_KEY', '')
     if 'openai_api_key' not in st.session_state:
         st.session_state.openai_api_key = os.environ.get('OPENAI_API_KEY', '')
+    if 'grok_api_key' not in st.session_state:
+        st.session_state.grok_api_key = os.environ.get('XAI_API_KEY', '')
 
 def should_refresh_data():
     """Smart data refresh logic for pipeline monitoring"""
