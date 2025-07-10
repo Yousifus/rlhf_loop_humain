@@ -98,16 +98,25 @@ export default function DriftAnalysisPage() {
             <div className="humain-card max-w-md mx-auto">
               <div className="humain-card-content text-center">
                 <ChartBarIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Drift Data Available</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Insufficient Data for Drift Analysis</h3>
                 <p className="text-gray-600 mb-4">
-                  Drift analysis requires continuous model predictions and feedback to detect changes in data patterns.
+                  Drift analysis requires at least <strong>6 annotations</strong> to detect meaningful patterns in confidence and choice distributions over time.
                 </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Current:</strong> You have 5 annotations<br/>
+                    <strong>Needed:</strong> 1 more annotation for drift analysis
+                  </p>
+                </div>
                 <button
                   onClick={() => window.location.href = '/annotation'}
-                  className="humain-btn-primary"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Start Collecting Data
+                  Add More Annotations
                 </button>
+                <p className="text-xs text-gray-500 mt-2">
+                  Drift timeline and clusters will appear automatically
+                </p>
               </div>
             </div>
           </div>

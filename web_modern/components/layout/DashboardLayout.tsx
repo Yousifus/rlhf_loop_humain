@@ -11,16 +11,17 @@ import {
   Bars3Icon,
   XMarkIcon,
   PencilIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const navigation = [
-      { name: 'Overview', href: '/', icon: HomeIcon },
+    { name: 'Overview', href: '/', icon: HomeIcon },
     { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
-    { name: 'Model Evolution', href: '/evolution', icon: CpuChipIcon },
     { name: 'Calibration', href: '/calibration', icon: DocumentChartBarIcon },
+    { name: 'Model Evolution', href: '/evolution', icon: CpuChipIcon },
     { name: 'Drift Analysis', href: '/drift', icon: ArrowPathIcon },
     { name: 'Annotation', href: '/annotation', icon: PencilIcon },
     { name: 'Chat Interface', href: '/chat', icon: ChatBubbleLeftRightIcon },

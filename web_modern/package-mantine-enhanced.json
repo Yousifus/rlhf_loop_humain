@@ -1,0 +1,165 @@
+{
+  "name": "rlhf-analytics-dashboard-enhanced",
+  "version": "3.0.0",
+  "description": "Enterprise RLHF Analysis Dashboard - Phase 3 Enhanced with Mantine UI",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build", 
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "demo": "npm run dev",
+    "showcase": "echo '🚀 Starting RLHF Analytics Dashboard with Mantine enhancement' && npm run dev"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    
+    "comment_mantine_core": "=== MANTINE UI ECOSYSTEM ===",
+    "@mantine/core": "^7.3.0",
+    "@mantine/hooks": "^7.3.0",
+    "@mantine/notifications": "^7.3.0",
+    "@mantine/modals": "^7.3.0",
+    "@mantine/spotlight": "^7.3.0",
+    "@mantine/nprogress": "^7.3.0",
+    
+    "comment_mantine_components": "=== ENHANCED COMPONENTS ===",
+    "@mantine/charts": "^7.3.0",
+    "@mantine/form": "^7.3.0", 
+    "@mantine/dates": "^7.3.0",
+    "@mantine/dropzone": "^7.3.0",
+    "@mantine/code-highlight": "^7.3.0",
+    "@mantine/tiptap": "^7.3.0",
+    "@mantine/carousel": "^7.3.0",
+    
+    "comment_phase3_integration": "=== PHASE 3 BACKEND INTEGRATION ===",
+    "axios": "^1.6.0",
+    "swr": "^2.2.0",
+    "socket.io-client": "^4.7.0",
+    
+    "comment_visualization": "=== VISUALIZATION & CHARTS ===",
+    "plotly.js": "^2.27.0",
+    "react-plotly.js": "^2.6.0",
+    "recharts": "^2.8.0",
+    "d3": "^7.8.0",
+    
+    "comment_utilities": "=== UTILITIES & ENHANCEMENTS ===",
+    "@tabler/icons-react": "^2.44.0",
+    "dayjs": "^1.11.0",
+    "framer-motion": "^10.16.0",
+    "lodash": "^4.17.21",
+    
+    "comment_analysis": "=== ANALYSIS & DATA PROCESSING ===",
+    "papaparse": "^5.4.0",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.0",
+    
+    "comment_real_time": "=== REAL-TIME FEATURES ===",
+    "ws": "^8.14.0",
+    "eventemitter3": "^5.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/node": "^20.0.0",
+    "@types/lodash": "^4.14.0",
+    "@types/file-saver": "^2.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0",
+    "postcss": "^8.4.0",
+    "postcss-preset-mantine": "^1.11.0",
+    "postcss-simple-vars": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "config": {
+    "comment_phase3_features": "Connects to our Phase 3 analysis modules",
+    "interactive_analysis": {
+      "backend_url": "http://localhost:8000/api",
+      "websocket_url": "ws://localhost:8000/ws",
+      "features": [
+        "3D Performance Surfaces",
+        "Animated Evolution Timelines", 
+        "Comparative Analysis Dashboards",
+        "Interactive Calibration Explorer"
+      ]
+    },
+    "automation_engine": {
+      "scheduler_endpoint": "/api/automation",
+      "pipeline_status": "/api/monitoring-status",
+      "features": [
+        "Intelligent Task Scheduling",
+        "Pipeline Orchestration",
+        "Automated Report Generation",
+        "Real-time Notifications"
+      ]
+    },
+    "data_integration": {
+      "versioning_api": "/api/data-versions",
+      "export_api": "/api/export",
+      "features": [
+        "Data Versioning with SHA-256",
+        "Quality Monitoring",
+        "Multi-format Export",
+        "Backup & Recovery"
+      ]
+    },
+    "performance_optimizer": {
+      "metrics_api": "/api/performance",
+      "streaming_api": "/api/streaming",
+      "features": [
+        "Parallel Processing",
+        "Intelligent Memoization",
+        "Incremental Updates",
+        "Real-time Analytics"
+      ]
+    }
+  },
+  "keywords": [
+    "rlhf", 
+    "analysis", 
+    "dashboard", 
+    "machine-learning", 
+    "human-feedback",
+    "mantine",
+    "react",
+    "next.js",
+    "enterprise",
+    "analytics",
+    "visualization",
+    "automation",
+    "performance",
+    "data-management"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/rlhf-analysis-system"
+  },
+  "license": "MIT",
+  "author": "RLHF Analysis Team",
+  "contributors": [
+    "Claude (AI Assistant) - Phase 3 Architecture & Implementation"
+  ],
+  "readme": "README.md",
+  "homepage": "https://rlhf-analytics.your-domain.com",
+  "bugs": {
+    "url": "https://github.com/your-org/rlhf-analysis-system/issues"
+  }
+} 

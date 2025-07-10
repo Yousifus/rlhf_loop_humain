@@ -29,7 +29,7 @@ try:
         app,
         host="0.0.0.0",
         port=8000,
-        reload=True,
+        reload=False,  # Disabled reload to fix startup issue
         log_level="info"
     )
     

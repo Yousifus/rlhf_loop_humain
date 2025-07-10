@@ -99,7 +99,7 @@ def save_settings(settings):
         if os.path.exists(SETTINGS_FILE):
             file_size = os.path.getsize(SETTINGS_FILE)
             print(f"✅ Settings file saved successfully ({file_size} bytes)")
-            return True
+        return True
         else:
             print(f"❌ Settings file was not created: {SETTINGS_FILE}")
             return False
@@ -181,8 +181,8 @@ async def get_real_data():
                 except Exception as sqlite_error:
                     print(f"⚠️ SQLite error: {sqlite_error}, falling back to JSONL...")
                     # Fallback to JSONL loading
-                    vote_df, predictions_df, reflections_df = load_all_data(force_reload=True)
-                    data_summary = get_data_summary()
+            vote_df, predictions_df, reflections_df = load_all_data(force_reload=True)
+            data_summary = get_data_summary()
             else:
                 # No SQLite available, use JSONL
                 vote_df, predictions_df, reflections_df = load_all_data(force_reload=True)
@@ -396,7 +396,7 @@ async def get_analytics():
                         "recall": safe_serialize(recall),
                         "f1": safe_serialize(f1)
                     })
-            
+        
             # Domain analysis - create synthetic domains based on data characteristics
             if len(analytics_df) >= 3:
                 # Create domain categories based on confidence levels
@@ -417,12 +417,12 @@ async def get_analytics():
                     'prompt_id': 'count',
                     'model_correct': 'mean',
                     'confidence': 'mean'
-                }).reset_index()
-                
+            }).reset_index()
+            
                 domain_stats.columns = ['domain', 'votes', 'accuracy', 'avg_confidence']
                 
                 # Calculate trends (simplified - would need historical data for real trends)
-                for _, domain in domain_stats.iterrows():
+            for _, domain in domain_stats.iterrows():
                     # Synthetic trend based on domain performance
                     accuracy = domain['accuracy']
                     if accuracy > 0.7:
@@ -432,12 +432,12 @@ async def get_analytics():
                     else:
                         trend = f"-{np.random.randint(1, 4)}%"
                     
-                    domain_data.append({
-                        "domain": domain['domain'],
+                domain_data.append({
+                    "domain": domain['domain'],
                         "votes": int(domain['votes']),
                         "accuracy": safe_serialize(domain['accuracy']),
                         "trend": trend
-                    })
+                })
         
         return {
             "performance_data": performance_data,
@@ -587,25 +587,25 @@ async def get_annotations():
         # Fallback to JSONL data if SQLite doesn't have sufficient data
         if len(annotations) == 0:
             print("📄 Falling back to JSONL data...")
-            vote_df, predictions_df, reflections_df, data_summary = await get_real_data()
-            
-            if vote_df is not None and not vote_df.empty:
-                # Convert recent annotations to JSON format
-                recent_votes = vote_df.tail(20)  # Get last 20 annotations
+        vote_df, predictions_df, reflections_df, data_summary = await get_real_data()
+        
+        if vote_df is not None and not vote_df.empty:
+            # Convert recent annotations to JSON format
+            recent_votes = vote_df.tail(20)  # Get last 20 annotations
                 total_count = len(vote_df)
-                
-                for idx, vote in recent_votes.iterrows():
-                    annotations.append({
-                        "id": str(idx),
-                        "timestamp": safe_serialize(vote.get('timestamp')),
-                        "human_choice": safe_serialize(vote.get('human_choice')),
-                        "model_choice": safe_serialize(vote.get('model_choice')),
+            
+            for idx, vote in recent_votes.iterrows():
+                annotations.append({
+                    "id": str(idx),
+                    "timestamp": safe_serialize(vote.get('timestamp')),
+                    "human_choice": safe_serialize(vote.get('human_choice')),
+                    "model_choice": safe_serialize(vote.get('model_choice')),
                         "confidence": safe_serialize(vote.get('confidence', 0.8)),
-                        "correct": safe_serialize(vote.get('model_correct')),
-                        "prompt": vote.get('prompt', 'Sample prompt text...'),
-                        "response_a": vote.get('response_a', 'Sample response A...'),
-                        "response_b": vote.get('response_b', 'Sample response B...')
-                    })
+                    "correct": safe_serialize(vote.get('model_correct')),
+                    "prompt": vote.get('prompt', 'Sample prompt text...'),
+                    "response_a": vote.get('response_a', 'Sample response A...'),
+                    "response_b": vote.get('response_b', 'Sample response B...')
+                })
                 
                 print(f"✅ Loaded {len(annotations)} annotations from JSONL fallback")
         
@@ -671,8 +671,8 @@ async def get_calibration_data():
             }
         
         # Prepare data for calibration analysis
-        vote_df_analysis = vote_df.copy()
-        
+            vote_df_analysis = vote_df.copy()
+            
         # Ensure we have confidence scores
         if 'confidence' not in vote_df_analysis.columns:
             # Create synthetic confidence based on available data
@@ -693,20 +693,20 @@ async def get_calibration_data():
         # Model is "correct" if: 
         # - Human chose option 1 (B) when confidence > 0.5 (model prefers option 1)
         # - Human chose option 0 (A) when confidence <= 0.5 (model prefers option 0)
-        vote_df_analysis['model_correct'] = (
-            ((vote_df_analysis['chosen_index'] == 1) & (vote_df_analysis['confidence'] > 0.5)) |
-            ((vote_df_analysis['chosen_index'] == 0) & (vote_df_analysis['confidence'] <= 0.5))
-        )
-        
-        # Try to use enhanced calibration analysis
-        try:
-            from utils.analysis.calibration_enhanced import AdvancedCalibrationAnalyzer
+                vote_df_analysis['model_correct'] = (
+                    ((vote_df_analysis['chosen_index'] == 1) & (vote_df_analysis['confidence'] > 0.5)) |
+                    ((vote_df_analysis['chosen_index'] == 0) & (vote_df_analysis['confidence'] <= 0.5))
+                )
             
-            analyzer = AdvancedCalibrationAnalyzer()
-            enhanced_metrics = analyzer.calculate_all_metrics(
-                y_true=vote_df_analysis['model_correct'].astype(int).values,
-                y_prob=vote_df_analysis['confidence'].values,
-                n_bins=10,
+        # Try to use enhanced calibration analysis
+            try:
+                from utils.analysis.calibration_enhanced import AdvancedCalibrationAnalyzer
+                
+                analyzer = AdvancedCalibrationAnalyzer()
+                enhanced_metrics = analyzer.calculate_all_metrics(
+                    y_true=vote_df_analysis['model_correct'].astype(int).values,
+                    y_prob=vote_df_analysis['confidence'].values,
+                    n_bins=10,
                 n_bootstrap=50  # Reduced for performance
             )
             
@@ -764,19 +764,19 @@ async def get_calibration_data():
             
             # Fallback to basic analysis
             import numpy as np
-            
+                
             # Basic ECE calculation
-            confidence_bins = pd.cut(vote_df_analysis['confidence'], bins=10, labels=False)
+                confidence_bins = pd.cut(vote_df_analysis['confidence'], bins=10, labels=False)
             ece = 0
             bin_stats = []
             
-            for bin_idx in range(10):
-                bin_data = vote_df_analysis[confidence_bins == bin_idx]
-                if len(bin_data) > 0:
+                for bin_idx in range(10):
+                    bin_data = vote_df_analysis[confidence_bins == bin_idx]
+                    if len(bin_data) > 0:
                     bin_lower = bin_idx / 10
                     bin_upper = (bin_idx + 1) / 10
                     confidence_level = (bin_lower + bin_upper) / 2
-                    accuracy = bin_data['model_correct'].mean()
+                        accuracy = bin_data['model_correct'].mean()
                     abs_error = abs(accuracy - confidence_level)
                     weight = len(bin_data) / len(vote_df_analysis)
                     ece += abs_error * weight
@@ -806,8 +806,8 @@ async def get_calibration_data():
                 'log_loss': brier_score * 1.2,  # Rough approximation
                 'kl_calibration': 0.0
             }
-            
-            return {
+        
+        return {
                 "overall_metrics": overall_metrics,
                 "bin_stats": bin_stats,
                 "confidence_distribution": {"correct": [], "incorrect": []},
@@ -821,7 +821,7 @@ async def get_calibration_data():
                 "enhanced_analysis_available": False,
                 "has_data": True,
                 "last_updated": datetime.now().isoformat()
-            }
+        }
         
     except Exception as e:
         print(f"Error getting calibration data: {e}")
@@ -1262,105 +1262,105 @@ async def get_drift_data():
                         vote_df_analysis['chosen_index'] = vote_df_analysis['human_choice'].map({'A': 0, 'B': 1})
                     
                     # Sort by timestamp
-                    vote_df_analysis = vote_df_analysis.sort_values('timestamp')
-                    
+            vote_df_analysis = vote_df_analysis.sort_values('timestamp')
+            
                     # Create time windows for drift analysis 
                     n_windows = min(4, max(2, len(vote_df_analysis) // 2))  # At least 2 windows, 2 votes per window minimum
-                    window_size = len(vote_df_analysis) // n_windows
-                    
-                    previous_stats = None
-                    
-                    for i in range(n_windows):
-                        start_idx = i * window_size
-                        end_idx = (i + 1) * window_size if i < n_windows - 1 else len(vote_df_analysis)
-                        window_data = vote_df_analysis.iloc[start_idx:end_idx]
-                        
-                        if len(window_data) > 0:
-                            # Calculate window statistics
+            window_size = len(vote_df_analysis) // n_windows
+            
+            previous_stats = None
+            
+            for i in range(n_windows):
+                start_idx = i * window_size
+                end_idx = (i + 1) * window_size if i < n_windows - 1 else len(vote_df_analysis)
+                window_data = vote_df_analysis.iloc[start_idx:end_idx]
+                
+                if len(window_data) > 0:
+                    # Calculate window statistics
                             confidence_mean = window_data['confidence'].mean() if 'confidence' in window_data.columns else 0.5
                             confidence_std = window_data['confidence'].std() if len(window_data) > 1 and 'confidence' in window_data.columns else 0.0
-                            
-                            # Choice distribution
-                            choice_dist = {}
-                            if 'chosen_index' in window_data.columns:
-                                choice_counts = window_data['chosen_index'].value_counts(normalize=True)
-                                choice_dist = choice_counts.to_dict()
-                            
-                            # Calculate drift score compared to previous window
-                            drift_score = 0.0
-                            if previous_stats is not None:
-                                # Confidence drift
-                                conf_drift = abs(confidence_mean - previous_stats['conf_mean'])
-                                std_drift = abs(confidence_std - previous_stats['conf_std'])
-                                
-                                # Choice pattern drift
-                                choice_drift = 0.0
-                                if choice_dist and previous_stats['choice_dist']:
-                                    for choice in [0, 1]:
-                                        prev_prob = previous_stats['choice_dist'].get(choice, 0)
-                                        curr_prob = choice_dist.get(choice, 0)
-                                        choice_drift += abs(curr_prob - prev_prob)
-                                
-                                # Combined drift score (0-1 scale)
-                                drift_score = min(1.0, (conf_drift * 2 + std_drift + choice_drift) / 3)
-                            
-                            # Format time for display
-                            window_time = window_data['timestamp'].iloc[len(window_data)//2]
-                            
-                            # Check if timestamp is valid (not NaT)
-                            if pd.isna(window_time):
-                                time_format = f"Window_{i+1}"  # Fallback if timestamp is invalid
-                            else:
-                                # Always use hour:minute format for better granularity
-                                time_format = window_time.strftime('%H:%M')
-                            
-                            drift_timeline.append({
-                                "date": time_format,
-                                "drift_score": round(drift_score, 3),
-                                "accuracy_drop": round(drift_score * 0.1, 3),  # Estimated performance impact
-                                "data_points": len(window_data)
-                            })
-                            
-                            # Store stats for next iteration
-                            previous_stats = {
-                                'conf_mean': confidence_mean,
-                                'conf_std': confidence_std,
-                                'choice_dist': choice_dist
-                            }
                     
-                    # Calculate current drift score
-                    if len(drift_timeline) > 0:
-                        current_drift_score = drift_timeline[-1]["drift_score"]
-                        has_data = True
+                    # Choice distribution
+                    choice_dist = {}
+                    if 'chosen_index' in window_data.columns:
+                        choice_counts = window_data['chosen_index'].value_counts(normalize=True)
+                        choice_dist = choice_counts.to_dict()
+                    
+                    # Calculate drift score compared to previous window
+                    drift_score = 0.0
+                    if previous_stats is not None:
+                        # Confidence drift
+                        conf_drift = abs(confidence_mean - previous_stats['conf_mean'])
+                        std_drift = abs(confidence_std - previous_stats['conf_std'])
                         
-                        # Create cluster analysis
-                        high_drift = [d for d in drift_timeline if d["drift_score"] > 0.2]
-                        medium_drift = [d for d in drift_timeline if 0.05 <= d["drift_score"] <= 0.2]
-                        low_drift = [d for d in drift_timeline if d["drift_score"] < 0.05]
+                        # Choice pattern drift
+                        choice_drift = 0.0
+                        if choice_dist and previous_stats['choice_dist']:
+                            for choice in [0, 1]:
+                                prev_prob = previous_stats['choice_dist'].get(choice, 0)
+                                curr_prob = choice_dist.get(choice, 0)
+                                choice_drift += abs(curr_prob - prev_prob)
                         
-                        if high_drift:
-                            cluster_analysis.append({
-                                "cluster_id": "high_drift",
-                                "size": len(high_drift),
-                                "drift_severity": "high",
-                                "representative_examples": [f"Time {d['date']}: {d['drift_score']:.3f} drift detected" for d in high_drift[:3]]
-                            })
-                        
-                        if medium_drift:
-                            cluster_analysis.append({
-                                "cluster_id": "medium_drift",
-                                "size": len(medium_drift),
-                                "drift_severity": "medium",
-                                "representative_examples": [f"Time {d['date']}: {d['drift_score']:.3f} moderate change" for d in medium_drift[:3]]
-                            })
-                        
-                        if low_drift:
-                            cluster_analysis.append({
-                                "cluster_id": "stable",
-                                "size": len(low_drift),
-                                "drift_severity": "low",
-                                "representative_examples": [f"Time {d['date']}: stable period" for d in low_drift[:3]]
-                            })
+                        # Combined drift score (0-1 scale)
+                        drift_score = min(1.0, (conf_drift * 2 + std_drift + choice_drift) / 3)
+                    
+                    # Format time for display
+                    window_time = window_data['timestamp'].iloc[len(window_data)//2]
+                    
+                    # Check if timestamp is valid (not NaT)
+                    if pd.isna(window_time):
+                        time_format = f"Window_{i+1}"  # Fallback if timestamp is invalid
+                    else:
+                        # Always use hour:minute format for better granularity
+                        time_format = window_time.strftime('%H:%M')
+                    
+                    drift_timeline.append({
+                        "date": time_format,
+                        "drift_score": round(drift_score, 3),
+                        "accuracy_drop": round(drift_score * 0.1, 3),  # Estimated performance impact
+                        "data_points": len(window_data)
+                    })
+                    
+                    # Store stats for next iteration
+                    previous_stats = {
+                        'conf_mean': confidence_mean,
+                        'conf_std': confidence_std,
+                        'choice_dist': choice_dist
+                    }
+            
+            # Calculate current drift score
+            if len(drift_timeline) > 0:
+                current_drift_score = drift_timeline[-1]["drift_score"]
+                has_data = True
+                
+                # Create cluster analysis
+                high_drift = [d for d in drift_timeline if d["drift_score"] > 0.2]
+                medium_drift = [d for d in drift_timeline if 0.05 <= d["drift_score"] <= 0.2]
+                low_drift = [d for d in drift_timeline if d["drift_score"] < 0.05]
+                
+                if high_drift:
+                    cluster_analysis.append({
+                        "cluster_id": "high_drift",
+                        "size": len(high_drift),
+                        "drift_severity": "high",
+                        "representative_examples": [f"Time {d['date']}: {d['drift_score']:.3f} drift detected" for d in high_drift[:3]]
+                    })
+                
+                if medium_drift:
+                    cluster_analysis.append({
+                        "cluster_id": "medium_drift",
+                        "size": len(medium_drift),
+                        "drift_severity": "medium",
+                        "representative_examples": [f"Time {d['date']}: {d['drift_score']:.3f} moderate change" for d in medium_drift[:3]]
+                    })
+                
+                if low_drift:
+                    cluster_analysis.append({
+                        "cluster_id": "stable",
+                        "size": len(low_drift),
+                        "drift_severity": "low",
+                        "representative_examples": [f"Time {d['date']}: stable period" for d in low_drift[:3]]
+                    })
                 
             except Exception as sqlite_error:
                 print(f"⚠️ SQLite drift analysis error: {sqlite_error}")
@@ -1690,8 +1690,8 @@ async def save_annotation(request: Dict[str, Any]):
                     "success": True,
                     "message": "Annotation saved to SQLite database",
                     "prompt_id": annotation_data["prompt_id"],
-                    "timestamp": datetime.now().isoformat()
-                }
+            "timestamp": datetime.now().isoformat()
+        }
             else:
                 raise HTTPException(status_code=500, detail="Failed to save annotation to database")
         else:

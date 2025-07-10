@@ -1,8 +1,9 @@
 {
   "apiKeys": {
-    "deepseek": "",
+    "deepseek": "sk-52cfbf637d204100bb7ce850fe628a0f",
     "openai": "",
-    "lmstudio": "http://localhost:1234"
+    "lmstudio": "http://localhost:1234",
+    "grok": "xai-e0q2wZxZiH4YhbWyv6dZi4y3E1HyqwFsSywGaxghnLG4xVKuBznqL8Mg1U9hXt6x7VXpiIT8DCL9FYdn"
   },
   "notifications": {
     "email": true,
@@ -13,13 +14,14 @@
   "dashboard": {
     "auto_refresh": true,
     "refresh_interval": 30,
-    "theme": "light",
+    "theme": "dark",
     "show_debug": false
   },
   "model": {
-    "default_provider": "deepseek",
+    "default_provider": "grok",
     "temperature": 0.7,
-    "max_tokens": 500,
+    "max_tokens": 50,
     "batch_size": 32
-  }
+  },
+  "test_field": "test_value"
 }
